@@ -21,10 +21,7 @@ android {
 
     buildTypes {
         release {
-            optimization {
-                enable = true
-                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
-            }
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -33,7 +30,6 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = true
     }
     useLibrary("android.car")
 }

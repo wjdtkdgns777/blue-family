@@ -28,7 +28,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.drivoice.BuildConfig
 import com.example.drivoice.Code
 import com.example.drivoice.Drive
 import com.example.drivoice.Mileage
@@ -241,24 +240,22 @@ internal fun SettingsPage() {
             }, Modifier.enter(3))
         },
         right = {
-            if (BuildConfig.DEBUG) {
-                SectionHeader(stringResource(R.string.demo_title), null)
-                DemoRow(0, R.string.demo_replay, R.string.demo_replay_detail) {
-                    ActionButton(stringResource(if (Drive.replaying) R.string.stop else R.string.start), { if (Drive.replaying) Drive.stopReplay() else Drive.replay() })
-                }
-                Hairline()
-                SwitchRow(1, stringResource(R.string.demo_fast), stringResource(R.string.demo_fast_detail), Drive.timeScale > 1) {
-                    Drive.timeScale = if (it) DEMO_SCALE else 1
-                }
-                Hairline()
-                DemoRow(2, R.string.demo_seed, null) {
-                    if (seeded) Text(stringResource(R.string.demo_seed_done), Type.body, palette.accent)
-                    else ActionButton(stringResource(R.string.start), { Drive.seedHistory(); seeded = true })
-                }
-                Hairline()
-                DemoRow(3, R.string.demo_state, null) {
-                    Text(Drive.debug, Type.label, palette.textSub)
-                }
+            SectionHeader(stringResource(R.string.demo_title), null)
+            DemoRow(0, R.string.demo_replay, R.string.demo_replay_detail) {
+                ActionButton(stringResource(if (Drive.replaying) R.string.stop else R.string.start), { if (Drive.replaying) Drive.stopReplay() else Drive.replay() })
+            }
+            Hairline()
+            SwitchRow(1, stringResource(R.string.demo_fast), stringResource(R.string.demo_fast_detail), Drive.timeScale > 1) {
+                Drive.timeScale = if (it) DEMO_SCALE else 1
+            }
+            Hairline()
+            DemoRow(2, R.string.demo_seed, null) {
+                if (seeded) Text(stringResource(R.string.demo_seed_done), Type.body, palette.accent)
+                else ActionButton(stringResource(R.string.start), { Drive.seedHistory(); seeded = true })
+            }
+            Hairline()
+            DemoRow(3, R.string.demo_state, null) {
+                Text(Drive.debug, Type.label, palette.textSub)
             }
         },
     )
