@@ -12,7 +12,7 @@
 ![Tests](https://img.shields.io/badge/unit_tests-22_passed-0B7D54?style=flat-square)
 ![Offline](https://img.shields.io/badge/서버-없이_동작-555A62?style=flat-square)
 
-[APK 받기](https://github.com/wjdtkdgns777/drivoice-private/releases/latest) | [시연 영상](.github/readme/demo.mp4) | [설치와 실행](#설치와-실행) | [시연 순서](#시연-순서)
+[APK 받기](apk/Drivoice_안심마일리지_release.apk) | [시연 영상](.github/readme/demo.mp4) | [설치와 실행](#설치와-실행) | [시연 순서](#시연-순서)
 
 <br>
 
@@ -112,7 +112,7 @@
 | 동의 | 설정 |
 |---|---|
 | <img src=".github/readme/01-consent.png" alt="동의 화면. 안전하게 운전한 만큼 마일리지가 쌓입니다와 이 앱이 쓰는 정보 세 줄"> | <img src=".github/readme/08-settings.png" alt="설정 탭. 효과음, 음성 안내 스위치, 기록과 마일리지 지우기, 시연 도구"> |
-| 처음 실행하면 무엇이 쌓이는지 세 줄, 어떤 정보를 어디에 쓰는지 세 줄을 보여 줍니다. "동의하고 시작"을 눌러야만 판정을 시작합니다. | 효과음과 음성 안내를 끌 수 있고, 기록과 마일리지를 두 번 확인한 뒤 지웁니다. 시연 도구는 debug 빌드에만 있습니다. |
+| 처음 실행하면 무엇이 쌓이는지 세 줄, 어떤 정보를 어디에 쓰는지 세 줄을 보여 줍니다. "동의하고 시작"을 눌러야만 판정을 시작합니다. | 효과음과 음성 안내를 끌 수 있고, 기록과 마일리지를 두 번 확인한 뒤 지웁니다. 오른쪽의 시연 도구로 회전 안내를 재생하고 지난 6일 기록을 채웁니다. |
 
 <br>
 
@@ -177,13 +177,13 @@ Pleos 디자인 가이드의 값을 그대로 토큰으로 옮겼습니다(`ui/T
 | 항목 | 값 |
 |---|---|
 | 에뮬레이터 | Pleos Connect v2.1.0 (Android 14, API 34, 2560×1440) |
-| APK | [Releases](https://github.com/wjdtkdgns777/drivoice-private/releases/latest)의 `drivoice-1.0.0.apk` |
+| APK | [`apk/Drivoice_안심마일리지_release.apk`](apk/Drivoice_안심마일리지_release.apk) (release 빌드, 40MB). [Releases](https://github.com/wjdtkdgns777/drivoice-private/releases/latest)에도 같은 파일이 있습니다 |
 | 차량 값 조작 | Pleos Connect Virtual Console (`http://127.0.0.1:8088/`) |
 
 ### APK 설치
 
 ```bash
-adb install -r drivoice-1.0.0.apk
+adb install -r apk/Drivoice_안심마일리지_release.apk
 ```
 
 ```bash
@@ -192,12 +192,12 @@ adb forward tcp:8088 tcp:8088
 
 앱 서랍에서 Drivoice를 열고 "동의하고 시작"을 누릅니다. 이어서 뜨는 차속(위치 그룹)과 마이크 권한을 허용합니다. 차량 전용 앱(`android.hardware.type.automotive`)이라 휴대폰 에뮬레이터에는 설치되지 않습니다.
 
-제출한 APK는 debug 빌드입니다. 에뮬레이터 내비가 실제로 움직이지 않아 회전 안내를 재생하는 시연 도구가 필요해서, 이 도구가 들어 있는 debug 빌드를 그대로 제출합니다.
+제출한 APK는 release 빌드입니다. 에뮬레이터 내비는 실제로 움직이지 않습니다. 그래서 회전 안내를 재생하는 시연 도구를 release 빌드의 설정 탭에도 넣었습니다. 서명은 Android 기본 디버그 키로 했습니다.
 
 ### 직접 빌드
 
 ```bash
-./gradlew :app:assembleDebug
+./gradlew :app:assembleRelease
 ```
 
 ```bash
