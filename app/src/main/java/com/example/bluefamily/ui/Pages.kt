@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.bluefamily.Code
 import com.example.bluefamily.Drive
@@ -37,6 +36,7 @@ import com.example.bluefamily.MileageRule
 import com.example.bluefamily.R
 import com.example.bluefamily.Store
 import com.example.bluefamily.Tier
+import com.example.bluefamily.Turn
 import com.example.bluefamily.Tx
 import java.time.LocalDate
 import kotlin.math.roundToInt
@@ -59,11 +59,12 @@ private fun Balance() {
         Spacer(Modifier.width(Space.s))
         Text(stringResource(R.string.unit_mile), Type.title, palette.text, Modifier.padding(bottom = 18.dp))
     }
+    Text(stringResource(R.string.today_earned, Store.earnedOn(today).grouped()), Type.bodyStrong, palette.accent)
     Spacer(Modifier.height(Space.xl))
-    val (name, next, goal, rule) = when (tier) {
-        Tier.GREEN -> listOf(R.string.tier_green, R.string.tier_silver_short, MileageRule.SILVER, R.string.tier_rule_silver)
-        Tier.SILVER -> listOf(R.string.tier_silver, R.string.tier_gold_short, MileageRule.GOLD, R.string.tier_rule_gold)
-        Tier.GOLD -> listOf(R.string.tier_gold, null, null, R.string.tier_top)
+    val (name, next, goal) = when (tier) {
+        Tier.GREEN -> listOf(R.string.tier_green, R.string.tier_silver_short, MileageRule.SILVER)
+        Tier.SILVER -> listOf(R.string.tier_silver, R.string.tier_gold_short, MileageRule.GOLD)
+        Tier.GOLD -> listOf(R.string.tier_gold, null, null)
     }
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
         Text(stringResource(name as Int), Type.titleSmall, palette.text, Modifier.weight(1f))
@@ -78,8 +79,6 @@ private fun Balance() {
     Box(Modifier.fillMaxWidth().height(12.dp).clip(CircleShape).background(palette.line)) {
         Box(Modifier.fillMaxWidth(fill.value).fillMaxHeight().clip(CircleShape).background(palette.accentBrush))
     }
-    Spacer(Modifier.height(Space.m))
-    Text(stringResource(rule as Int), Type.label, palette.textSub)
 }
 
 @Composable
@@ -94,7 +93,10 @@ private fun Ledger() {
         Glass {
             txs.forEachIndexed { i, tx ->
                 Row(Modifier.fillMaxWidth().heightIn(min = 76.dp).enter(index++), verticalAlignment = Alignment.CenterVertically) {
-                    Text(tx.title(), Type.body, palette.text, Modifier.weight(1f))
+                    Column(Modifier.weight(1f)) {
+                        Text(tx.title(), Type.body, palette.text)
+                        tx.turnDetail()?.let { Text(it, Type.label, palette.textSub) }
+                    }
                     Text(stringResource(R.string.amount_plus, tx.miles.grouped()), Type.bodyStrong, palette.text)
                 }
                 if (i < txs.lastIndex) Hairline()
@@ -103,57 +105,37 @@ private fun Ledger() {
     }
 }
 
+// 회전 깜빡이 적립 줄 아래에 그 운전에서 늦게 켠 회전을 보여 줍니다
+@Composable
+private fun Tx.turnDetail(): String? {
+    if (code != Code.TURN && code != Code.TURN_UNGUIDED) return null
+    val trip = Store.trips.firstOrNull { "${it.id}-$code" == id } ?: return null
+    val late = trip.turns.filter { it.guided == (code == Code.TURN) && !it.onTime }
+    if (late.isEmpty()) return null
+    return late.map { stringResource(R.string.turn_late, stringResource(if (it.turn == Turn.LEFT) R.string.turn_left else R.string.turn_right)) }.joinToString(", ")
+}
+
 @Composable
 private fun Tx.title() = when (code) {
     Code.TURN -> stringResource(R.string.ledger_turns, count)
     Code.TURN_UNGUIDED -> stringResource(R.string.ledger_turns_unguided, count)
     Code.DISTANCE -> stringResource(if (miles > count) R.string.ledger_distance_double else R.string.ledger_distance, count)
-    Code.REST -> stringResource(R.string.ledger_rest)
-    Code.KEPT_DAY -> stringResource(R.string.ledger_kept_day)
+    Code.SAFE_DAY -> stringResource(R.string.ledger_safe_day)
     Code.STREAK -> stringResource(R.string.ledger_streak)
-    Code.PARTNER -> stringResource(R.string.ledger_partner)
     Code.FAMILY -> stringResource(R.string.ledger_family)
     Code.BELT -> stringResource(R.string.ledger_belt, count)
-}
-
-@Composable
-internal fun RestPlaces() {
-    val palette = LocalPalette.current
-    SectionHeader(stringResource(R.string.rest_places_title), null)
-    Glass {
-    Drive.places.forEachIndexed { index, place ->
-            Row(Modifier.fillMaxWidth().heightIn(min = 112.dp).enter(index), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(place.name), Type.bodyStrong, palette.text)
-                    Text(stringResource(R.string.km, "%.1f".format(Drive.distanceKm(place))), Type.label, palette.textSub)
-                }
-                if (Drive.pendingPlace == place) {
-                    Text(stringResource(R.string.waypoint_added), Type.body, palette.accent)
-                } else {
-                    ActionButton(stringResource(R.string.add_waypoint), { Drive.addRestStop(place) })
-                }
-            }
-            if (index < Drive.places.lastIndex) Hairline()
-        }
-    }
-    Spacer(Modifier.height(Space.m))
-    Text(stringResource(R.string.rest_places_note), Type.body, palette.textSub, Modifier.enter(Drive.places.size))
 }
 
 @Composable
 internal fun FamilyPage() {
     val palette = LocalPalette.current
     val settings = Store.settings
-    val today = LocalDate.now()
-    val weekKept = (0L..6L).all { back -> Store.ledger.any { it.code == Code.KEPT_DAY && it.at.toLocalDate() == today.minusDays(back) } }
-    val signalGood = (Mileage.signalRate(Store.trips, today.minusDays(6)) ?: 0.0) >= MileageRule.SAFE_RATE
-    val me = Mileage.weekMember(Store.trips, today, R.string.member_me, R.string.car_this)
+    val me = Mileage.weekMember(Store.trips, LocalDate.now(), R.string.member_me, R.string.car_this)
     TwoColumns(
         left = {
             Text(stringResource(R.string.family_bundle_title), Type.body, palette.textSub)
-            Text(stringResource(R.string.family_bundle_value, Family.cars), Type.title.copy(brush = palette.accentBrush), Color.Unspecified, Modifier.enter(0))
+            Text(stringResource(R.string.family_bundle_value, Family.cars), Type.title, palette.text, Modifier.enter(0))
             Text(stringResource(R.string.family_bundle_bonus, (Mileage.familyRate(Family.cars) * 100).roundToInt()), Type.bodyStrong, palette.accent, Modifier.enter(1))
-            Text(stringResource(R.string.family_bundle_rule), Type.label, palette.textSub, Modifier.enter(2))
             Spacer(Modifier.height(Space.xl))
             SectionHeader(stringResource(R.string.family_scores_title), null)
             Glass {
@@ -161,60 +143,30 @@ internal fun FamilyPage() {
                     Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index + 3), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text("${stringResource(member.name)}  ${stringResource(member.car)}", Type.bodyStrong, palette.text)
-                            Text(stringResource(R.string.family_penalties, member.speeding, member.hardBrakes, member.missedSignals, member.beltOff), Type.label, palette.textSub)
+                            // 감점이 있는 항목만 보여 줍니다
+                            val penalties = listOf(
+                                R.string.penalty_speeding to member.speeding,
+                                R.string.penalty_hard_brake to member.hardBrakes,
+                                R.string.penalty_signal to member.missedSignals,
+                                R.string.penalty_belt to member.beltOff,
+                            ).filter { it.second > 0 }.map { stringResource(it.first, it.second) }
+                            Text(if (penalties.isEmpty()) stringResource(R.string.penalty_none) else penalties.joinToString(", "), Type.label, palette.textSub)
                         }
                         Text(stringResource(R.string.family_score, member.score), Type.bodyStrong, palette.text)
                     }
                     if (index < Family.others.size) Hairline()
                 }
             }
-            Text(stringResource(R.string.family_demo_note), Type.label, palette.textSub, Modifier.padding(top = Space.m))
         },
         right = {
             Text(stringResource(R.string.family_code_title), Type.body, palette.textSub)
             Text(settings.inviteCode.chunked(3).joinToString(" "), Type.title, palette.text)
-            Text(stringResource(R.string.family_code_note), Type.label, palette.textSub)
-            Spacer(Modifier.height(Space.m))
+            Spacer(Modifier.height(Space.l))
             Glass {
     SwitchRow(0, stringResource(R.string.family_share), stringResource(R.string.family_share_detail), settings.familyShare) {
                     Store.update(settings.copy(familyShare = it))
                 }
-                Hairline()
-                SwitchRow(1, stringResource(R.string.family_share_conditions), stringResource(R.string.family_share_conditions_detail), settings.shareConditions) {
-                    Store.update(settings.copy(shareConditions = it))
-                }
             }
-            Spacer(Modifier.height(Space.xl))
-            SectionHeader(stringResource(R.string.family_visible_title), null)
-            val tier = when (Mileage.tier(Store.ledger, Store.trips, today)) {
-                Tier.GREEN -> R.string.tier_green
-                Tier.SILVER -> R.string.tier_silver
-                Tier.GOLD -> R.string.tier_gold
-            }
-            val rows = buildList {
-                add(stringResource(R.string.balance_label) to stringResource(R.string.miles_value, Store.balance.grouped()))
-                if (settings.familyShare) {
-                    add(stringResource(R.string.family_my_score) to stringResource(R.string.family_score, me.score))
-                    add(stringResource(R.string.family_tier) to stringResource(tier))
-                    add(stringResource(R.string.badge_week) to stringResource(if (weekKept) R.string.badge_earned else R.string.badge_not_yet))
-                    add(stringResource(R.string.badge_signal) to stringResource(if (signalGood) R.string.badge_earned else R.string.badge_not_yet))
-                }
-            }
-            Glass {
-    rows.forEachIndexed { index, (label, value) ->
-                    Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index), verticalAlignment = Alignment.CenterVertically) {
-                        Text(label, Type.body, palette.text, Modifier.weight(1f))
-                        Text(value, Type.bodyStrong, if (value == stringResource(R.string.badge_earned)) palette.accent else palette.text, align = TextAlign.End)
-                    }
-                    if (index < rows.lastIndex) Hairline()
-                }
-            }
-            if (!settings.familyShare) {
-                Text(stringResource(R.string.family_balance_only), Type.body, palette.textSub, Modifier.padding(top = Space.m))
-            }
-            Spacer(Modifier.height(Space.xl))
-            SectionHeader(stringResource(R.string.family_hidden_title), null)
-            Text(stringResource(R.string.family_hidden), Type.body, palette.textSub, Modifier.padding(top = Space.m).enter(rows.size))
         },
     )
 }
@@ -229,27 +181,22 @@ internal fun SettingsPage() {
         left = {
             SectionHeader(stringResource(R.string.settings_title), null)
             Glass {
-    SwitchRow(0, stringResource(R.string.settings_sound), stringResource(R.string.settings_sound_detail), settings.sound) {
+    SwitchRow(0, stringResource(R.string.settings_sound), null, settings.sound) {
                     Store.update(settings.copy(sound = it))
                 }
                 Hairline()
-                SwitchRow(1, stringResource(R.string.settings_voice), stringResource(R.string.settings_voice_detail), settings.voice) {
+                SwitchRow(1, stringResource(R.string.settings_voice), null, settings.voice) {
                     Store.update(settings.copy(voice = it))
                 }
             }
             Spacer(Modifier.height(Space.l))
-            Text(stringResource(R.string.settings_privacy), Type.body, palette.textSub, Modifier.enter(2))
-            Spacer(Modifier.height(Space.m))
             val label = when (clearStep) {
                 0 -> R.string.settings_clear
                 1 -> R.string.settings_clear_confirm
                 else -> R.string.settings_cleared
             }
             ActionButton(stringResource(label), {
-                if (clearStep == 1) {
-                    Store.clear()
-                    Drive.summary = null
-                }
+                if (clearStep == 1) Store.clear()
                 clearStep = (clearStep + 1).coerceAtMost(2)
             }, Modifier.enter(3))
         },
@@ -260,17 +207,9 @@ internal fun SettingsPage() {
                     ActionButton(stringResource(if (Drive.replaying) R.string.stop else R.string.start), { if (Drive.replaying) Drive.stopReplay() else Drive.replay() })
                 }
                 Hairline()
-                SwitchRow(1, stringResource(R.string.demo_fast), stringResource(R.string.demo_fast_detail), Drive.timeScale > 1) {
-                    Drive.timeScale = if (it) DEMO_SCALE else 1
-                }
-                Hairline()
-                DemoRow(2, R.string.demo_seed, null) {
+                DemoRow(1, R.string.demo_seed, null) {
                     if (seeded) Text(stringResource(R.string.demo_seed_done), Type.body, palette.accent)
                     else ActionButton(stringResource(R.string.start), { Drive.seedHistory(); seeded = true })
-                }
-                Hairline()
-                DemoRow(3, R.string.demo_state, null) {
-                    Text(Drive.debug, Type.label, palette.textSub)
                 }
             }
         },
@@ -288,5 +227,3 @@ private fun DemoRow(index: Int, title: Int, detail: Int?, trailing: @Composable 
         trailing()
     }
 }
-
-private const val DEMO_SCALE = 30

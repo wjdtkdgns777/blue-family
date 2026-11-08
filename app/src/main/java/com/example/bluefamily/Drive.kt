@@ -1,15 +1,9 @@
 package com.example.bluefamily
 
 import ai.pleos.playground.navi.constants.NavigationStatus
-import ai.pleos.playground.navi.constants.RouteOption
 import ai.pleos.playground.navi.constants.TurnType
-import ai.pleos.playground.navi.constants.WaypointIndex
 import ai.pleos.playground.navi.data.CurrentLocationInfo
-import ai.pleos.playground.navi.data.DestinationInfo
-import ai.pleos.playground.navi.data.RequestWaypointInfo
 import ai.pleos.playground.navi.data.TBTInfo
-import ai.pleos.playground.navi.data.WaypointArrivedInfo
-import ai.pleos.playground.navi.data.WaypointInfo
 import ai.pleos.playground.navi.helper.NaviHelper
 import ai.pleos.playground.navi.helper.listener.NaviHelperEventListener
 import ai.pleos.playground.vehicle.Vehicle
@@ -35,59 +29,25 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
-import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.ZonedDateTime
-import kotlin.math.cos
-import kotlin.math.hypot
 
-data class Place(@StringRes val name: Int, val lat: Double, val lon: Double, val miles: Int)
-
-data class RouteState(
-    val destination: String? = null,
-    val arrival: LocalTime? = null,
-    val freeRoad: Boolean? = null,
-    val freeRequested: Boolean = false,
-    val arrivesAfterSunset: Boolean = false,
-)
-
-data class Summary(val turns: Int, val onTime: Int, val miles: Int, val missed: Turn?)
+/** 사람이 앉은 좌석 하나와 그 좌석의 벨트를 맸는지 */
+data class SeatState(val seat: SeatValue, val buckled: Boolean)
 
 object Drive {
-
-    val places = listOf(
-        Place(R.string.place_mangyang, 37.4602, 127.0425, 30),
-        Place(R.string.place_jukjeon, 37.3241, 127.1066, 30),
-        Place(R.string.place_giheung, 37.2496, 127.1133, 30),
-    )
 
     var driving by mutableStateOf(false)
         private set
     var sessionOpen by mutableStateOf(false)
         private set
-    val liveTurns = mutableStateListOf<TurnRecord>()
-    var continuousMs by mutableLongStateOf(0L)
-        private set
-    var summary by mutableStateOf<Summary?>(null)
-    var route by mutableStateOf(RouteState())
-        private set
-    var waypoints by mutableIntStateOf(0)
-        private set
-    var pendingPlace by mutableStateOf<Place?>(null)
-        private set
-    var timeScale by mutableIntStateOf(1)
+    private val liveTurns = mutableListOf<TurnRecord>()
     var replaying by mutableStateOf(false)
-        private set
-    var debug by mutableStateOf("")
         private set
 
     private lateinit var context: Context
@@ -100,8 +60,8 @@ object Drive {
     private val unguided = UnguidedTurnJudge(LocalTime::now, ::onTurn)
     private val driverDoor = DoorArea(DoorValue.ROW_1_LEFT)
     private val seats = listOf(SeatValue.ROW_1_LEFT, SeatValue.ROW_1_RIGHT, SeatValue.ROW_2_LEFT, SeatValue.ROW_2_CENTER, SeatValue.ROW_2_RIGHT)
-    private val buckled = mutableMapOf<SeatValue, Boolean>()
-    private val occupied = mutableMapOf(SeatValue.ROW_1_LEFT to true)
+    private val buckled = mutableStateMapOf<SeatValue, Boolean>()
+    private val occupied = mutableStateMapOf(SeatValue.ROW_1_LEFT to true)
 
     private var started = false
     private var uxKnown = false
@@ -112,21 +72,13 @@ object Drive {
     private var replayStep: Runnable? = null
     private var signal: Turn? = null
     private var nextTurnM: Double? = null
-    private var nextTurnType: TurnType? = null
     private var guided = false
-    private var lat = Sun.SEOUL_LAT
-    private var lon = Sun.SEOUL_LON
     private var odometerKm: Float? = null
     private var speedLimit = 0
-    private var fastRoadSinceMs = 0L
-    private var highway = false
 
     private var sessionId = ""
     private var sessionStart = LocalDateTime.now()
     private var distanceM = 0.0
-    private var nightM = 0.0
-    private var highwayM = 0.0
-    private var overLimit = false
     private var speeding = 0
     private var hardBrakes = 0
     private var speedingSinceMs = 0L
@@ -134,15 +86,8 @@ object Drive {
     private var beltOff = 0
     private var beltedSeats = 0
     private var beltUnsafe = false
-    private var rests = 0
-    private var lastClosedMs = 0L
-    private var restPrompts = 0
-    private var nextPromptMs = 0L
-    private var arrivedPlace: Place? = null
-    private var arrivedMs = 0L
-    private var routeFor: String? = null
 
-    private class Speech(val text: String, val deadlineMs: Long, val then: (() -> Unit)?)
+    private class Speech(val text: String, val deadlineMs: Long)
 
     private val speeches = ArrayDeque<Speech>()
 
@@ -181,26 +126,14 @@ object Drive {
         }
 
         navi = NaviHelper(context)
-        navi.initialize({ navi.getTBTInfo(); navi.getDestinationInfo(); navi.getWaypointInfo() }, { Log.e(TAG, "navi", it) })
+        navi.initialize({ navi.getTBTInfo() }, { Log.e(TAG, "navi", it) })
         navi.addListener(naviListener)
 
         main.post(tick)
     }
 
-    fun addRestStop(place: Place) {
-        if (waypoints >= MAX_WAYPOINTS) {
-            say(R.string.say_waypoints_full)
-            return
-        }
-        navi.addWaypoint(RequestWaypointInfo(place.lat, place.lon, context.getString(place.name), if (waypoints == 0) WaypointIndex.FIRST else WaypointIndex.SECOND, "", "", "", ""))
-        pendingPlace = place
-    }
-
-    fun nearestPlace() = places.minBy { hypot(it.lat - lat, (it.lon - lon) * cos(Math.toRadians(lat))) }
-
-    fun distanceKm(place: Place) = hypot(place.lat - lat, (place.lon - lon) * cos(Math.toRadians(lat))) * KM_PER_DEGREE
-
-    fun restLimitMs() = Store.conditions.restMinutes * MINUTE_MS
+    // 차가 탑승을 감지하지 못하는 좌석은 값이 오지 않아 목록에서 빠집니다
+    val seatStates get() = seats.filter { occupied[it] == true }.map { SeatState(it, buckled[it] == true) }
 
     fun replay() {
         if (replaying) return
@@ -243,8 +176,8 @@ object Drive {
         for (back in 6 downTo 1) {
             val end = today.minusDays(back.toLong()).atTime(15, 10)
             val turns = List(6 + back % 3) { TurnRecord(LocalTime.of(14, 30).plusMinutes(it * 3L), if (it % 2 == 0) Turn.RIGHT else Turn.LEFT, !(back == 4 && it == 1)) }
-            val trip = Trip("seed-$back", end.minusMinutes(40), end, (14 + back * 3) * 1000.0, 0.0, 0.0, false, if (back % 2 == 0) 1 else 0, turns, speeding = if (back == 3) 1 else 0, hardBrakes = if (back == 5) 1 else 0, beltedSeats = 1 + back % 2)
-            Store.add(trip, Mileage.forTrip(trip, Store.conditions, Store.trips.toList(), Store.ledger.toList()))
+            val trip = Trip("seed-$back", end.minusMinutes(40), end, (14 + back * 3) * 1000.0, turns, speeding = if (back == 3) 1 else 0, hardBrakes = if (back == 5) 1 else 0, beltedSeats = 1 + back % 2)
+            Store.add(trip, Mileage.forTrip(trip, Store.trips.toList(), Store.ledger.toList()))
         }
     }
 
@@ -258,36 +191,19 @@ object Drive {
     private fun updateSession() {
         if (!sessionOpen && driving) open()
         else if (sessionOpen && !driving && doorOpen) close()
-        val place = arrivedPlace
-        if (place != null && !driving && doorOpen && SystemClock.elapsedRealtime() - arrivedMs <= VISIT_WINDOW_MS) {
-            Store.add(null, listOf(Tx("visit-${System.currentTimeMillis()}", LocalDateTime.now(), Code.PARTNER, place.miles, 1)))
-            arrivedPlace = null
-        }
     }
 
     private fun open() {
-        val gap = (SystemClock.elapsedRealtime() - lastClosedMs) * timeScale
-        rests = 0
-        if (lastClosedMs > 0 && gap >= REST_GAP_MS) {
-            if (gap <= REST_RESET_MS && continuousMs >= MileageRule.REST_MIN * MINUTE_MS && continuousMs <= restLimitMs()) rests = 1
-            continuousMs = 0
-            restPrompts = 0
-        }
         sessionId = "trip-${System.currentTimeMillis()}"
         sessionStart = LocalDateTime.now()
         distanceM = 0.0
-        nightM = 0.0
-        highwayM = 0.0
-        overLimit = false
         speeding = 0
         hardBrakes = 0
         speedingSinceMs = 0L
         beltOff = 0
         beltedSeats = 0
         beltUnsafe = false
-        highway = false
         liveTurns.clear()
-        summary = null
         sessionOpen = true
         Store.saveOpen(snapshot())
         checkBelts()
@@ -310,24 +226,22 @@ object Drive {
         checkBelts()
     }
 
-    private fun snapshot() = Trip(sessionId, sessionStart, LocalDateTime.now(), distanceM, nightM, highwayM, overLimit, rests, liveTurns.toList(), speeding, hardBrakes, beltOff, if (beltUnsafe) 0 else beltedSeats)
+    private fun snapshot() = Trip(sessionId, sessionStart, LocalDateTime.now(), distanceM, liveTurns.toList(), speeding, hardBrakes, beltOff, if (beltUnsafe) 0 else beltedSeats)
 
     private fun settle(trip: Trip) {
-        Store.add(trip, Mileage.forTrip(trip, Store.conditions, Store.trips.toList(), Store.ledger.toList(), familyRate()))
+        Store.add(trip, Mileage.forTrip(trip, Store.trips.toList(), Store.ledger.toList(), familyRate()))
     }
 
-    private fun familyRate() = if (Store.settings.familyShare) Mileage.familyRate(Family.cars) else 0.0
+    fun familyRate() = if (Store.settings.familyShare) Mileage.familyRate(Family.cars) else 0.0
 
     private fun close() {
         sessionOpen = false
-        lastClosedMs = SystemClock.elapsedRealtime()
         val trip = snapshot()
-        val txs = Mileage.forTrip(trip, Store.conditions, Store.trips.toList(), Store.ledger.toList(), familyRate())
+        val txs = Mileage.forTrip(trip, Store.trips.toList(), Store.ledger.toList(), familyRate())
         Store.add(trip, txs)
         liveTurns.clear()
         val miles = txs.sumOf { it.miles }
         val missed = trip.turns.firstOrNull { !it.onTime }?.turn
-        summary = Summary(trip.turns.size, trip.turns.count { it.onTime }, miles, missed)
         val text = if (trip.turns.isEmpty()) context.getString(R.string.say_summary_no_turns, miles)
         else context.getString(R.string.say_summary, trip.turns.size, trip.turns.count { it.onTime }, miles)
         say(text)
@@ -342,22 +256,13 @@ object Drive {
     }
 
     private fun onNextTurn(type: TurnType?, distance: Double) {
-        val passedIc = nextTurnType in IC_ENTRIES && (nextTurnM ?: Double.MAX_VALUE) <= IC_PASSED_M && type != nextTurnType
-        if (passedIc) highway = true
-        nextTurnType = type
         nextTurnM = if (type == null || type == TurnType.TURN_ARRIVE) null else distance
         judge.onNextTurn(type, distance)
-        debug = "$type ${distance.toInt()}m signal=$signal"
     }
 
     private val tick = object : Runnable {
         override fun run() {
             val now = SystemClock.elapsedRealtime()
-            if (driving) {
-                continuousMs += TICK_MS * timeScale
-                if (Store.conditions.rest && continuousMs > restLimitMs()) overLimit = true
-                if (Store.conditions.rest && continuousMs >= restLimitMs() * PROMPT_RATIO && restPrompts < MAX_PROMPTS && now >= nextPromptMs) askRest(now)
-            }
             val over = sessionOpen && speedLimit > 0 && (speedMps ?: 0f) * KMH_PER_MPS > speedLimit + SPEEDING_MARGIN_KMH
             if (!over) speedingSinceMs = 0L
             else if (speedingSinceMs == 0L) speedingSinceMs = now
@@ -366,35 +271,14 @@ object Drive {
                 speedingSinceMs = -1L
                 Store.saveOpen(snapshot())
             }
-            if (speedLimit >= HIGHWAY_LIMIT) {
-                if (fastRoadSinceMs == 0L) fastRoadSinceMs = now
-                if (now - fastRoadSinceMs >= HIGHWAY_HOLD_MS) highway = true
-            } else {
-                fastRoadSinceMs = 0L
-                if (speedLimit in 1 until LEAVE_HIGHWAY_LIMIT) highway = false
-            }
             speakNext(now)
             main.postDelayed(this, TICK_MS)
         }
     }
 
-    private fun askRest(now: Long) {
-        restPrompts++
-        nextPromptMs = now + REPROMPT_MS / timeScale
-        val place = nearestPlace()
-        say(context.getString(R.string.say_rest_question, context.getString(place.name))) {
-            voice.listen { heard ->
-                val no = NO_WORDS.any { heard.contains(context.getString(it)) }
-                if (!no && YES_WORDS.any { heard.contains(context.getString(it)) }) addRestStop(place)
-            }
-        }
-    }
-
-    private fun say(@StringRes text: Int) = say(context.getString(text))
-
-    private fun say(text: String, then: (() -> Unit)? = null) {
+    private fun say(text: String) {
         if (!Store.settings.voice) return
-        speeches.addLast(Speech(text, SystemClock.elapsedRealtime() + SPEECH_TTL_MS, then))
+        speeches.addLast(Speech(text, SystemClock.elapsedRealtime() + SPEECH_TTL_MS))
     }
 
     private fun speakNext(now: Long) {
@@ -402,7 +286,7 @@ object Drive {
         val next = speeches.firstOrNull() ?: return
         val stopped = speedMps?.let { it < STOPPED_MPS } ?: false
         val clear = uxKnown && (stopped || (!brake && signal == null && (nextTurnM ?: Double.MAX_VALUE) >= QUIET_TURN_M))
-        if (clear && voice.speak(next.text, next.then)) speeches.removeFirst()
+        if (clear && voice.speak(next.text)) speeches.removeFirst()
     }
 
     private fun addDistance(km: Float) {
@@ -411,24 +295,7 @@ object Drive {
         if (previous == null || !sessionOpen || km <= previous) return
         val meters = (km - previous) * 1000.0
         distanceM += meters
-        if (Sun.isNight(ZonedDateTime.now(), lat, lon)) nightM += meters
-        if (highway) highwayM += meters
         Store.saveOpen(snapshot())
-    }
-
-    private fun onDestination(info: DestinationInfo) {
-        val arrival = LocalTime.now().plusSeconds(info.remainTime.toLong())
-        val sunset = Sun.sunset(LocalDate.now(), lat, lon, ZonedDateTime.now().zone)
-        val afterSunset = sunset != null && LocalTime.now().isBefore(sunset) && arrival.isAfter(sunset)
-        val fresh = routeFor != info.name
-        route = route.copy(destination = info.name, arrival = arrival, arrivesAfterSunset = afterSunset, freeRoad = if (fresh) null else route.freeRoad, freeRequested = !fresh && route.freeRequested)
-        if (!fresh) return
-        routeFor = info.name
-        if (Store.conditions.avoidHighway) {
-            navi.changeRouteOption(RouteOption.FREE)
-            route = route.copy(freeRequested = true)
-        }
-        if (Store.conditions.noNight && afterSunset) say(R.string.say_after_sunset)
     }
 
     private val signalListener = object : TurnSignalStateListener {
@@ -498,7 +365,8 @@ object Drive {
     private fun occupancyListener(seat: SeatValue) = object : SeatOccupancyListener {
         override fun onSeatOccupancyUpdated(state: Boolean?) {
             if (state != null) main.post {
-                occupied[seat] = state
+                // SDK 2.3.2는 표준 값 1(빈자리)을 true로 넘겨서 뒤집어 씁니다
+                occupied[seat] = !state
                 checkBelts()
             }
         }
@@ -528,38 +396,11 @@ object Drive {
         }
 
         override fun onCurrentLocationInfo(info: CurrentLocationInfo) {
-            main.post {
-                lat = info.latitude
-                lon = info.longitude
-                unguided.onHeading(SystemClock.elapsedRealtime(), info.heading, sessionOpen && !guided)
-            }
+            main.post { unguided.onHeading(SystemClock.elapsedRealtime(), info.heading, sessionOpen && !guided) }
         }
 
         override fun onNavigationStatus(status: NavigationStatus) {
             main.post { if (!replaying) guided = status == NavigationStatus.ROUTE_DRIVE }
-        }
-
-        override fun onDestinationInfo(info: DestinationInfo) {
-            main.post { onDestination(info) }
-        }
-
-        override fun onRouteOptionChanged(option: RouteOption) {
-            main.post {
-                if (option == RouteOption.FREE && route.freeRoad != true) say(R.string.say_free_road)
-                route = route.copy(freeRoad = option == RouteOption.FREE)
-            }
-        }
-
-        override fun onWayPointInfo(list: List<WaypointInfo>) {
-            main.post { waypoints = list.size }
-        }
-
-        override fun onWayPointArrived(info: WaypointArrivedInfo) {
-            main.post {
-                arrivedPlace = pendingPlace
-                arrivedMs = SystemClock.elapsedRealtime()
-                pendingPlace = null
-            }
         }
 
         override fun onReRouteEnded() {
@@ -567,19 +408,11 @@ object Drive {
         }
 
         override fun onRouteCancelled() {
-            main.post {
-                judge.onRouteChanged()
-                route = RouteState()
-                routeFor = null
-            }
+            main.post { judge.onRouteChanged() }
         }
 
         override fun onRouteEnded() {
-            main.post {
-                judge.onRouteChanged()
-                route = RouteState()
-                routeFor = null
-            }
+            main.post { judge.onRouteChanged() }
         }
     }
 
@@ -587,28 +420,11 @@ object Drive {
         Log.e(TAG, what, e)
     }
 
-    private val IC_ENTRIES = setOf(TurnType.TURN_ENTER_IC_L, TurnType.TURN_ENTER_IC_R, TurnType.TURN_ENTER_IC_C)
-    private val YES_WORDS = listOf(R.string.yes_stop_by, R.string.yes_ok, R.string.yes_yes)
-    private val NO_WORDS = listOf(R.string.no_not, R.string.no_dislike, R.string.no_no)
-
     private const val TAG = "BlueFamily"
     private const val TICK_MS = 1_000L
-    private const val MINUTE_MS = 60_000L
-    private val REST_GAP_MS = Duration.ofMinutes(10).toMillis()
-    private val REST_RESET_MS = Duration.ofHours(2).toMillis()
-    private val REPROMPT_MS = Duration.ofMinutes(15).toMillis()
-    private val VISIT_WINDOW_MS = Duration.ofMinutes(10).toMillis()
     private const val SPEECH_TTL_MS = 120_000L
-    private const val PROMPT_RATIO = 0.9
-    private const val MAX_PROMPTS = 2
-    private const val MAX_WAYPOINTS = 2
     private const val QUIET_TURN_M = 500.0
     private const val STOPPED_MPS = 0.5f
-    private const val HIGHWAY_LIMIT = 100
-    private const val LEAVE_HIGHWAY_LIMIT = 80
-    private const val HIGHWAY_HOLD_MS = 60_000L
-    private const val IC_PASSED_M = 50.0
-    private const val KM_PER_DEGREE = 111.32
     private const val KMH_PER_MPS = 3.6f
     private const val SPEEDING_MARGIN_KMH = 20
     private const val SPEEDING_HOLD_MS = 3_000L

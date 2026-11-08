@@ -1,6 +1,5 @@
 package com.example.bluefamily
 
-import android.Manifest
 import android.car.Car
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -13,7 +12,7 @@ import com.example.bluefamily.ui.BlueFamilyTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val permissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { Drive.watchSpeed() }
+    private val permissions = registerForActivityResult(ActivityResultContracts.RequestPermission()) { Drive.watchSpeed() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,7 +41,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestMissing() {
-        val missing = listOf(Manifest.permission.RECORD_AUDIO, Car.PERMISSION_SPEED).filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
-        if (missing.isNotEmpty()) permissions.launch(missing.toTypedArray())
+        if (checkSelfPermission(Car.PERMISSION_SPEED) != PackageManager.PERMISSION_GRANTED) permissions.launch(Car.PERMISSION_SPEED)
     }
 }
