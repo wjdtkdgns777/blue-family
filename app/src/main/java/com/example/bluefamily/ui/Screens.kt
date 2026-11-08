@@ -32,6 +32,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -71,7 +72,7 @@ fun BlueFamilyApp(driving: Boolean, onAgree: () -> Unit, onLater: () -> Unit) {
     }
     AnimatedContent(
         targetState = page,
-        modifier = Modifier.fillMaxSize().background(palette.background),
+        modifier = Modifier.fillMaxSize().glowBackground(palette),
         transitionSpec = {
             if (targetState == Page.DRIVING) EnterTransition.None togetherWith ExitTransition.None
             else fadeIn(tween(Motion.MEDIUM2, easing = Motion.easing)) togetherWith fadeOut(tween(Motion.SHORT1))
@@ -103,16 +104,18 @@ private fun ConsentScreen(onAgree: () -> Unit, onLater: () -> Unit) {
             }
             Spacer(Modifier.height(Space.xl))
             SectionHeader(stringResource(R.string.consent_data_title), null)
-            listOf(
-                R.string.consent_vehicle to R.string.consent_vehicle_detail,
-                R.string.consent_location to R.string.consent_location_detail,
-                R.string.consent_mic to R.string.consent_mic_detail,
-            ).forEachIndexed { index, (title, detail) ->
-                Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index + 4), verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(title), Type.bodyStrong, palette.text, Modifier.width(200.dp))
-                    Text(stringResource(detail), Type.body, palette.textSub, Modifier.weight(1f))
+            Glass {
+    listOf(
+                    R.string.consent_vehicle to R.string.consent_vehicle_detail,
+                    R.string.consent_location to R.string.consent_location_detail,
+                    R.string.consent_mic to R.string.consent_mic_detail,
+                ).forEachIndexed { index, (title, detail) ->
+                    Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index + 4), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(title), Type.bodyStrong, palette.text, Modifier.width(200.dp))
+                        Text(stringResource(detail), Type.body, palette.textSub, Modifier.weight(1f))
+                    }
+                    if (index < 2) Hairline()
                 }
-                Hairline()
             }
             Spacer(Modifier.height(Space.xl))
             Row(horizontalArrangement = Arrangement.spacedBy(Space.s), modifier = Modifier.enter(7)) {
@@ -144,8 +147,8 @@ private fun ParkedScreen() {
     val tabs = listOf(R.string.tab_today, R.string.tab_before, R.string.tab_mileage, R.string.tab_family, R.string.tab_settings)
     Column(Modifier.fillMaxSize().padding(horizontal = Space.xxl, vertical = Space.xl)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.product_name), Type.title, palette.text, Modifier.weight(1f))
-            Segments(tabs.map { stringResource(it) }, tab, { tab = it })
+            Text(stringResource(R.string.product_name), Type.headline.copy(brush = palette.accentBrush), Color.Unspecified, Modifier.weight(1f))
+            Segments(tabs.map { stringResource(it) }, tab, { tab = it }, itemWidth = 160.dp)
         }
         Spacer(Modifier.height(Space.xl))
         AnimatedContent(
@@ -205,7 +208,7 @@ private fun TodaySummary(today: LocalDate, night: Boolean, highway: Boolean, ove
     val conditions = Store.conditions
     Text(stringResource(R.string.today_earned_label, shortDate(today)), Type.body, palette.textSub)
     Row(verticalAlignment = Alignment.Bottom) {
-        RollingNumber(Store.earnedOn(today), Type.hero, palette.text, prefix = "+", fromZero = true)
+        RollingNumber(Store.earnedOn(today), Type.hero.copy(brush = palette.heroBrush), Color.Unspecified, prefix = "+", fromZero = true)
         Spacer(Modifier.width(Space.s))
         Text(stringResource(R.string.unit_mile), Type.title, palette.text, Modifier.padding(bottom = 18.dp))
     }
@@ -213,7 +216,7 @@ private fun TodaySummary(today: LocalDate, night: Boolean, highway: Boolean, ove
     Text(stringResource(R.string.today_balance, Store.balance.grouped()), Type.body, palette.textSub)
     Drive.summary?.let { summary ->
         Spacer(Modifier.height(Space.l))
-        Column(Modifier.fillMaxWidth().enter(0).background(palette.surface, RoundedCornerShape(24.dp)).padding(Space.m)) {
+        Column(Modifier.fillMaxWidth().enter(0).glass(palette).padding(Space.l)) {
             Text(
                 if (summary.turns == 0) stringResource(R.string.summary_no_turns) else stringResource(R.string.summary_turns, summary.turns, summary.onTime),
                 Type.bodyStrong,
@@ -231,19 +234,21 @@ private fun TodaySummary(today: LocalDate, night: Boolean, highway: Boolean, ove
         Triple(stringResource(R.string.condition_highway), conditions.avoidHighway, highway),
         Triple(stringResource(R.string.condition_rest, conditions.restMinutes), conditions.rest, overLimit),
     )
+    Glass {
     rows.forEachIndexed { index, (label, active, broken) ->
-        Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index + 1), verticalAlignment = Alignment.CenterVertically) {
-            Mark(active && !broken)
-            Spacer(Modifier.width(Space.m))
-            Text(label, Type.body, if (active) palette.text else palette.textSub, Modifier.weight(1f))
-            val status = when {
-                !active -> R.string.condition_unused
-                broken -> R.string.condition_broken
-                else -> R.string.condition_kept
+            Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index + 1), verticalAlignment = Alignment.CenterVertically) {
+                Mark(active && !broken)
+                Spacer(Modifier.width(Space.m))
+                Text(label, Type.body, if (active) palette.text else palette.textSub, Modifier.weight(1f))
+                val status = when {
+                    !active -> R.string.condition_unused
+                    broken -> R.string.condition_broken
+                    else -> R.string.condition_kept
+                }
+                Text(stringResource(status), Type.body, if (status == R.string.condition_kept) palette.accent else palette.textSub)
             }
-            Text(stringResource(status), Type.body, if (status == R.string.condition_kept) palette.accent else palette.textSub)
+            if (index < rows.lastIndex) Hairline()
         }
-        if (index < rows.lastIndex) Hairline()
     }
 }
 
@@ -253,37 +258,37 @@ private fun TurnLog(records: List<TurnRecord>) {
     SectionHeader(stringResource(R.string.turns_title), if (records.isEmpty()) null else stringResource(R.string.turns_summary, records.size, records.count { it.onTime }))
     if (records.isEmpty()) {
         Text(stringResource(R.string.turns_empty), Type.body, palette.textSub, Modifier.padding(vertical = Space.m))
-    }
+    } else Glass {
     records.asReversed().forEachIndexed { index, record ->
-        Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index + 3), verticalAlignment = Alignment.CenterVertically) {
-            Text(record.time.format(clock), Type.body, palette.textSub, Modifier.width(112.dp))
-            Text(stringResource(if (record.turn == Turn.LEFT) R.string.turn_left else R.string.turn_right), Type.body, palette.text, Modifier.width(132.dp))
-            Text(stringResource(if (record.onTime) R.string.turn_on_time else R.string.turn_late), Type.body, palette.textSub, Modifier.width(150.dp))
-            Text(if (record.guided) "" else stringResource(R.string.turn_unguided), Type.label, palette.textSub, Modifier.weight(1f))
-            val amount = when {
-                !record.onTime -> 0
-                record.guided -> MileageRule.TURN_ON_TIME
-                else -> MileageRule.TURN_UNGUIDED
+            Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index + 3), verticalAlignment = Alignment.CenterVertically) {
+                Text(record.time.format(clock), Type.body, palette.textSub, Modifier.width(112.dp))
+                Text(stringResource(if (record.turn == Turn.LEFT) R.string.turn_left else R.string.turn_right), Type.body, palette.text, Modifier.width(132.dp))
+                Text(stringResource(if (record.onTime) R.string.turn_on_time else R.string.turn_late), Type.body, palette.textSub, Modifier.width(150.dp))
+                Text(if (record.guided) "" else stringResource(R.string.turn_unguided), Type.label, palette.textSub, Modifier.weight(1f))
+                val amount = when {
+                    !record.onTime -> 0
+                    record.guided -> MileageRule.TURN_ON_TIME
+                    else -> MileageRule.TURN_UNGUIDED
+                }
+                Text(
+                    if (amount > 0) stringResource(R.string.amount_plus, amount.toString()) else amount.toString(),
+                    Type.bodyStrong,
+                    if (amount > 0) palette.accent else palette.textSub,
+                    align = TextAlign.End,
+                )
             }
-            Text(
-                if (amount > 0) stringResource(R.string.amount_plus, amount.toString()) else amount.toString(),
-                Type.bodyStrong,
-                if (amount > 0) palette.accent else palette.textSub,
-                align = TextAlign.End,
-            )
+            if (index < records.lastIndex) Hairline()
         }
-        Hairline()
     }
 }
 
 @Composable
 internal fun SectionHeader(title: String, trailing: String?) {
     val palette = LocalPalette.current
-    Row(Modifier.fillMaxWidth().padding(bottom = Space.xs), verticalAlignment = Alignment.Bottom) {
-        Text(title, Type.titleSmall, palette.text, Modifier.weight(1f))
-        if (trailing != null) Text(trailing, Type.body, palette.textSub)
+    Row(Modifier.fillMaxWidth().padding(top = Space.s, bottom = Space.xs), verticalAlignment = Alignment.Bottom) {
+        Text(title, Type.labelStrong, palette.text, Modifier.weight(1f))
+        if (trailing != null) Text(trailing, Type.label, palette.textSub)
     }
-    Hairline()
 }
 
 @Composable
@@ -302,34 +307,35 @@ private fun BeforePage() {
 private fun ConditionsEditor(conditions: Conditions, onChange: (Conditions) -> Unit) {
     val palette = LocalPalette.current
     SectionHeader(stringResource(R.string.conditions_title), null)
+    Glass {
     SwitchRow(0, stringResource(R.string.condition_night), stringResource(R.string.conditions_night_detail), conditions.noNight) {
-        onChange(conditions.copy(noNight = it))
-    }
-    Hairline()
-    SwitchRow(1, stringResource(R.string.condition_highway), stringResource(R.string.conditions_highway_detail), conditions.avoidHighway) {
-        onChange(conditions.copy(avoidHighway = it))
-    }
-    Hairline()
-    SwitchRow(2, stringResource(R.string.conditions_rest_title), stringResource(R.string.conditions_rest_detail), conditions.rest) {
-        onChange(conditions.copy(rest = it))
-    }
-    Row(Modifier.fillMaxWidth().padding(start = Space.m, bottom = Space.m).enter(3), verticalAlignment = Alignment.CenterVertically) {
-        val enabled = conditions.rest
-        Text(stringResource(R.string.conditions_rest_limit), Type.body, palette.textSub, Modifier.weight(1f))
-        StepButton("−", stringResource(R.string.decrease), enabled) {
-            onChange(conditions.copy(restMinutes = (conditions.restMinutes - MileageRule.REST_STEP).coerceAtLeast(MileageRule.REST_MIN)))
+            onChange(conditions.copy(noNight = it))
         }
-        Box(Modifier.width(180.dp), contentAlignment = Alignment.Center) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                RollingNumber(conditions.restMinutes, Type.title, if (enabled) palette.text else palette.textSub)
-                Text(stringResource(R.string.unit_minute), Type.body, palette.textSub, Modifier.padding(start = 4.dp, bottom = 3.dp))
+        Hairline()
+        SwitchRow(1, stringResource(R.string.condition_highway), stringResource(R.string.conditions_highway_detail), conditions.avoidHighway) {
+            onChange(conditions.copy(avoidHighway = it))
+        }
+        Hairline()
+        SwitchRow(2, stringResource(R.string.conditions_rest_title), stringResource(R.string.conditions_rest_detail), conditions.rest) {
+            onChange(conditions.copy(rest = it))
+        }
+        Row(Modifier.fillMaxWidth().padding(start = Space.m, bottom = Space.m).enter(3), verticalAlignment = Alignment.CenterVertically) {
+            val enabled = conditions.rest
+            Text(stringResource(R.string.conditions_rest_limit), Type.body, palette.textSub, Modifier.weight(1f))
+            StepButton("−", stringResource(R.string.decrease), enabled) {
+                onChange(conditions.copy(restMinutes = (conditions.restMinutes - MileageRule.REST_STEP).coerceAtLeast(MileageRule.REST_MIN)))
+            }
+            Box(Modifier.width(180.dp), contentAlignment = Alignment.Center) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    RollingNumber(conditions.restMinutes, Type.title, if (enabled) palette.text else palette.textSub)
+                    Text(stringResource(R.string.unit_minute), Type.body, palette.textSub, Modifier.padding(start = 4.dp, bottom = 3.dp))
+                }
+            }
+            StepButton("+", stringResource(R.string.increase), enabled) {
+                onChange(conditions.copy(restMinutes = (conditions.restMinutes + MileageRule.REST_STEP).coerceAtMost(MileageRule.REST_MAX)))
             }
         }
-        StepButton("+", stringResource(R.string.increase), enabled) {
-            onChange(conditions.copy(restMinutes = (conditions.restMinutes + MileageRule.REST_STEP).coerceAtMost(MileageRule.REST_MAX)))
-        }
     }
-    Hairline()
     Spacer(Modifier.height(Space.l))
     Text(stringResource(R.string.conditions_family_note), Type.body, palette.textSub, Modifier.enter(4))
 }
@@ -355,12 +361,14 @@ private fun RouteStatus() {
         stringResource(R.string.route_sunset) to (sunset?.format(clock) ?: dash),
         stringResource(R.string.route_continuous) to stringResource(R.string.route_continuous_value, (Drive.continuousMs / 60_000).toInt(), conditions.restMinutes),
     )
+    Glass {
     rows.forEachIndexed { index, (label, value) ->
-        Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index), verticalAlignment = Alignment.CenterVertically) {
-            Text(label, Type.body, palette.textSub, Modifier.weight(1f))
-            Text(value, Type.bodyStrong, palette.text, align = TextAlign.End)
+            Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index), verticalAlignment = Alignment.CenterVertically) {
+                Text(label, Type.body, palette.textSub, Modifier.weight(1f))
+                Text(value, Type.bodyStrong, palette.text, align = TextAlign.End)
+            }
+            if (index < rows.lastIndex) Hairline()
         }
-        Hairline()
     }
     if (conditions.noNight && route.arrivesAfterSunset) {
         Spacer(Modifier.height(Space.m))
