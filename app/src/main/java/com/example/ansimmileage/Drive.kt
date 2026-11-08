@@ -1,4 +1,4 @@
-package com.example.drivoice
+package com.example.ansimmileage
 
 import ai.pleos.playground.navi.constants.NavigationStatus
 import ai.pleos.playground.navi.constants.RouteOption
@@ -120,6 +120,10 @@ object Drive {
     private var nightM = 0.0
     private var highwayM = 0.0
     private var overLimit = false
+    private var speeding = 0
+    private var hardBrakes = 0
+    private var speedingSinceMs = 0L
+    private var speedAtMs = 0L
     private var rests = 0
     private var lastClosedMs = 0L
     private var restPrompts = 0
@@ -225,7 +229,7 @@ object Drive {
         for (back in 6 downTo 1) {
             val end = today.minusDays(back.toLong()).atTime(15, 10)
             val turns = List(6 + back % 3) { TurnRecord(LocalTime.of(14, 30).plusMinutes(it * 3L), if (it % 2 == 0) Turn.RIGHT else Turn.LEFT, !(back == 4 && it == 1)) }
-            val trip = Trip("seed-$back", end.minusMinutes(40), end, (14 + back * 3) * 1000.0, 0.0, 0.0, false, if (back % 2 == 0) 1 else 0, turns)
+            val trip = Trip("seed-$back", end.minusMinutes(40), end, (14 + back * 3) * 1000.0, 0.0, 0.0, false, if (back % 2 == 0) 1 else 0, turns, speeding = if (back == 3) 1 else 0, hardBrakes = if (back == 5) 1 else 0)
             Store.add(trip, Mileage.forTrip(trip, Store.conditions, Store.trips.toList(), Store.ledger.toList()))
         }
     }
@@ -260,6 +264,9 @@ object Drive {
         nightM = 0.0
         highwayM = 0.0
         overLimit = false
+        speeding = 0
+        hardBrakes = 0
+        speedingSinceMs = 0L
         highway = false
         liveTurns.clear()
         summary = null
@@ -267,17 +274,19 @@ object Drive {
         Store.saveOpen(snapshot())
     }
 
-    private fun snapshot() = Trip(sessionId, sessionStart, LocalDateTime.now(), distanceM, nightM, highwayM, overLimit, rests, liveTurns.toList())
+    private fun snapshot() = Trip(sessionId, sessionStart, LocalDateTime.now(), distanceM, nightM, highwayM, overLimit, rests, liveTurns.toList(), speeding, hardBrakes)
 
     private fun settle(trip: Trip) {
-        Store.add(trip, Mileage.forTrip(trip, Store.conditions, Store.trips.toList(), Store.ledger.toList()))
+        Store.add(trip, Mileage.forTrip(trip, Store.conditions, Store.trips.toList(), Store.ledger.toList(), familyRate()))
     }
+
+    private fun familyRate() = if (Store.settings.familyShare) Mileage.familyRate(Family.cars) else 0.0
 
     private fun close() {
         sessionOpen = false
         lastClosedMs = SystemClock.elapsedRealtime()
         val trip = snapshot()
-        val txs = Mileage.forTrip(trip, Store.conditions, Store.trips.toList(), Store.ledger.toList())
+        val txs = Mileage.forTrip(trip, Store.conditions, Store.trips.toList(), Store.ledger.toList(), familyRate())
         Store.add(trip, txs)
         liveTurns.clear()
         val miles = txs.sumOf { it.miles }
@@ -312,6 +321,14 @@ object Drive {
                 continuousMs += TICK_MS * timeScale
                 if (Store.conditions.rest && continuousMs > restLimitMs()) overLimit = true
                 if (Store.conditions.rest && continuousMs >= restLimitMs() * PROMPT_RATIO && restPrompts < MAX_PROMPTS && now >= nextPromptMs) askRest(now)
+            }
+            val over = sessionOpen && speedLimit > 0 && (speedMps ?: 0f) * KMH_PER_MPS > speedLimit + SPEEDING_MARGIN_KMH
+            if (!over) speedingSinceMs = 0L
+            else if (speedingSinceMs == 0L) speedingSinceMs = now
+            else if (speedingSinceMs > 0L && now - speedingSinceMs >= SPEEDING_HOLD_MS) {
+                speeding++
+                speedingSinceMs = -1L
+                Store.saveOpen(snapshot())
             }
             if (speedLimit >= HIGHWAY_LIMIT) {
                 if (fastRoadSinceMs == 0L) fastRoadSinceMs = now
@@ -397,10 +414,22 @@ object Drive {
     private val speedListener = object : CarPropertyManager.CarPropertyEventCallback {
         override fun onChangeEvent(value: CarPropertyValue<*>) {
             val speed = value.value as? Float ?: return
-            main.post { speedMps = speed }
+            main.post { onSpeed(speed) }
         }
 
         override fun onErrorEvent(propertyId: Int, areaId: Int) = Unit
+    }
+
+    private fun onSpeed(speed: Float) {
+        val now = SystemClock.elapsedRealtime()
+        val seconds = ((now - speedAtMs) / 1000f).coerceIn(MIN_SAMPLE_S, 1f)
+        val drop = ((speedMps ?: speed) - speed) * KMH_PER_MPS / seconds
+        if (sessionOpen && brake && drop >= HARD_BRAKE_KMH_PER_S) {
+            hardBrakes++
+            Store.saveOpen(snapshot())
+        }
+        speedMps = speed
+        speedAtMs = now
     }
 
     private val brakeListener = object : BrakePedalStatusListener {
@@ -507,7 +536,7 @@ object Drive {
     private val YES_WORDS = listOf(R.string.yes_stop_by, R.string.yes_ok, R.string.yes_yes)
     private val NO_WORDS = listOf(R.string.no_not, R.string.no_dislike, R.string.no_no)
 
-    private const val TAG = "Drivoice"
+    private const val TAG = "AnsimMileage"
     private const val TICK_MS = 1_000L
     private const val MINUTE_MS = 60_000L
     private val REST_GAP_MS = Duration.ofMinutes(10).toMillis()
@@ -525,6 +554,11 @@ object Drive {
     private const val HIGHWAY_HOLD_MS = 60_000L
     private const val IC_PASSED_M = 50.0
     private const val KM_PER_DEGREE = 111.32
+    private const val KMH_PER_MPS = 3.6f
+    private const val SPEEDING_MARGIN_KMH = 20
+    private const val SPEEDING_HOLD_MS = 3_000L
+    private const val HARD_BRAKE_KMH_PER_S = 11f
+    private const val MIN_SAMPLE_S = 0.1f
     private const val REPLAY_STEP_M = 8.0
     private const val REPLAY_TICK_MS = 500L
 }

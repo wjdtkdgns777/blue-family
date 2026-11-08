@@ -1,4 +1,4 @@
-package com.example.drivoice
+package com.example.ansimmileage
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -47,6 +47,25 @@ class MileageTest {
         val history = listOf(trip("h", noon.minusDays(1), onTime = 20))
         val txs = Mileage.forTrip(trip(km = 10.0), Conditions(), history, emptyList())
         assertEquals(20, miles(txs, Code.DISTANCE))
+    }
+
+    @Test
+    fun familyBundleAddsBonusOnTopOfEarned() {
+        val txs = Mileage.forTrip(trip(onTime = 5, late = 1), Conditions(), emptyList(), emptyList(), Mileage.familyRate(4))
+        assertEquals(20, miles(txs, Code.FAMILY))
+    }
+
+    @Test
+    fun familyRateGrowsPerCarUpToThirtyPercent() {
+        assertEquals(0.0, Mileage.familyRate(1), 1e-9)
+        assertEquals(0.1, Mileage.familyRate(2), 1e-9)
+        assertEquals(0.3, Mileage.familyRate(6), 1e-9)
+    }
+
+    @Test
+    fun scoreDeductsPenaltiesAndStopsAtZero() {
+        assertEquals(84, Mileage.score(speeding = 2, hardBrakes = 1, missedSignals = 1))
+        assertEquals(0, Mileage.score(speeding = 30, hardBrakes = 0, missedSignals = 0))
     }
 
     @Test

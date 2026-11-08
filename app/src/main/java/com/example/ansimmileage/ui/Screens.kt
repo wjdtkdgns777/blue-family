@@ -1,4 +1,4 @@
-package com.example.drivoice.ui
+package com.example.ansimmileage.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.EnterTransition
@@ -39,14 +39,14 @@ import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.drivoice.Conditions
-import com.example.drivoice.Drive
-import com.example.drivoice.MileageRule
-import com.example.drivoice.R
-import com.example.drivoice.Store
-import com.example.drivoice.Sun
-import com.example.drivoice.Turn
-import com.example.drivoice.TurnRecord
+import com.example.ansimmileage.Conditions
+import com.example.ansimmileage.Drive
+import com.example.ansimmileage.MileageRule
+import com.example.ansimmileage.R
+import com.example.ansimmileage.Store
+import com.example.ansimmileage.Sun
+import com.example.ansimmileage.Turn
+import com.example.ansimmileage.TurnRecord
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.ZoneId
@@ -62,7 +62,7 @@ internal fun Int.grouped(): String = NumberFormat.getIntegerInstance(Locale.KORE
 internal fun shortDate(date: LocalDate) = stringResource(R.string.date_short, date.monthValue, date.dayOfMonth)
 
 @Composable
-fun DrivoiceApp(driving: Boolean, onAgree: () -> Unit, onLater: () -> Unit) {
+fun AnsimMileageApp(driving: Boolean, onAgree: () -> Unit, onLater: () -> Unit) {
     val palette = LocalPalette.current
     val page = when {
         !Store.settings.consented -> Page.CONSENT

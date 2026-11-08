@@ -1,14 +1,16 @@
-package com.example.drivoice
+package com.example.ansimmileage
 
 import java.time.LocalDate
 import java.time.LocalDateTime
+import androidx.annotation.StringRes
 import java.time.LocalTime
+import kotlin.math.roundToInt
 
 enum class Turn { LEFT, RIGHT }
 
 data class TurnRecord(val time: LocalTime, val turn: Turn, val onTime: Boolean, val guided: Boolean = true)
 
-enum class Code { DISTANCE, TURN, TURN_UNGUIDED, KEPT_DAY, STREAK, REST, PARTNER }
+enum class Code { DISTANCE, TURN, TURN_UNGUIDED, KEPT_DAY, STREAK, REST, PARTNER, FAMILY }
 
 data class Tx(val id: String, val at: LocalDateTime, val code: Code, val miles: Int, val count: Int)
 
@@ -22,11 +24,26 @@ data class Trip(
     val overLimit: Boolean,
     val rests: Int,
     val turns: List<TurnRecord>,
+    val speeding: Int = 0,
+    val hardBrakes: Int = 0,
 )
 
 data class Conditions(val noNight: Boolean = true, val avoidHighway: Boolean = true, val rest: Boolean = true, val restMinutes: Int = 60)
 
 enum class Tier { GREEN, SILVER, GOLD }
+
+data class Member(@StringRes val name: Int, @StringRes val car: Int, val speeding: Int, val hardBrakes: Int, val missedSignals: Int) {
+    val score get() = Mileage.score(speeding, hardBrakes, missedSignals)
+}
+
+object Family {
+    val others = listOf(
+        Member(R.string.member_mother, R.string.car_grandeur, 0, 1, 1),
+        Member(R.string.member_daughter, R.string.car_casper, 2, 1, 3),
+        Member(R.string.member_son, R.string.car_ev3, 1, 0, 0),
+    )
+    val cars get() = others.size + 1
+}
 
 object MileageRule {
     const val PER_KM = 1
@@ -45,6 +62,11 @@ object MileageRule {
     const val REST_MIN = 30
     const val REST_MAX = 120
     const val REST_STEP = 10
+    const val SPEEDING_PENALTY = 5
+    const val HARD_BRAKE_PENALTY = 3
+    const val MISSED_SIGNAL_PENALTY = 3
+    const val FAMILY_RATE_PER_CAR = 0.1
+    const val FAMILY_RATE_MAX = 0.3
 }
 
 object Mileage {
@@ -57,7 +79,17 @@ object Mileage {
         return if (turns.isEmpty()) null else turns.count { it.onTime }.toDouble() / turns.size
     }
 
-    fun forTrip(trip: Trip, conditions: Conditions, history: List<Trip>, ledger: List<Tx>): List<Tx> {
+    fun score(speeding: Int, hardBrakes: Int, missedSignals: Int) =
+        (100 - speeding * MileageRule.SPEEDING_PENALTY - hardBrakes * MileageRule.HARD_BRAKE_PENALTY - missedSignals * MileageRule.MISSED_SIGNAL_PENALTY).coerceIn(0, 100)
+
+    fun weekMember(trips: List<Trip>, today: LocalDate, @StringRes name: Int, @StringRes car: Int): Member {
+        val week = trips.filter { !it.startedAt.toLocalDate().isBefore(today.minusDays(6)) }
+        return Member(name, car, week.sumOf { it.speeding }, week.sumOf { it.hardBrakes }, week.sumOf { trip -> trip.turns.count { !it.onTime } })
+    }
+
+    fun familyRate(cars: Int) = ((cars - 1) * MileageRule.FAMILY_RATE_PER_CAR).coerceIn(0.0, MileageRule.FAMILY_RATE_MAX)
+
+    fun forTrip(trip: Trip, conditions: Conditions, history: List<Trip>, ledger: List<Tx>, familyRate: Double = 0.0): List<Tx> {
         val day = trip.endedAt.toLocalDate()
         fun tx(code: Code, miles: Int, count: Int) = Tx("${trip.id}-$code", trip.endedAt, code, miles, count)
 
@@ -85,11 +117,13 @@ object Mileage {
         }
 
         var room = MileageRule.DAILY_CAP - ledger.filter { it.at.toLocalDate() == day && it.code != Code.PARTNER }.sumOf { it.miles }
-        return earned.mapNotNull { item ->
+        val capped = earned.mapNotNull { item ->
             val miles = item.miles.coerceAtMost(room.coerceAtLeast(0))
             room -= miles
             item.copy(miles = miles).takeIf { (miles > 0 || item.code == Code.KEPT_DAY) && ledger.none { it.id == item.id } }
         }
+        val bonus = (capped.sumOf { it.miles } * familyRate).roundToInt()
+        return if (bonus > 0) capped + tx(Code.FAMILY, bonus, 1) else capped
     }
 
     fun tier(ledger: List<Tx>, trips: List<Trip>, today: LocalDate): Tier {

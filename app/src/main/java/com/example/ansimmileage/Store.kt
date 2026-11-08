@@ -1,4 +1,4 @@
-package com.example.drivoice
+package com.example.ansimmileage
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -141,6 +141,8 @@ object Store {
         .put("highwayM", trip.highwayM)
         .put("overLimit", trip.overLimit)
         .put("rests", trip.rests)
+        .put("speeding", trip.speeding)
+        .put("hardBrakes", trip.hardBrakes)
         .put("turns", JSONArray(trip.turns.map { JSONObject().put("time", it.time.toString()).put("turn", it.turn.name).put("onTime", it.onTime).put("guided", it.guided) }))
 
     private fun trip(o: JSONObject) = Trip(
@@ -153,6 +155,8 @@ object Store {
         o.getBoolean("overLimit"),
         o.getInt("rests"),
         o.getJSONArray("turns").objects().map { TurnRecord(LocalTime.parse(it.getString("time")), Turn.valueOf(it.getString("turn")), it.getBoolean("onTime"), it.getBoolean("guided")) },
+        o.optInt("speeding"),
+        o.optInt("hardBrakes"),
     )
 
     private fun json(tx: Tx) = JSONObject()
@@ -164,7 +168,7 @@ object Store {
 
     private fun tx(o: JSONObject) = Tx(o.getString("id"), LocalDateTime.parse(o.getString("at")), Code.valueOf(o.getString("code")), o.getInt("miles"), o.getInt("count"))
 
-    private const val NAME = "drivoice"
+    private const val NAME = "ansim_mileage"
     private const val TRIPS = "trips"
     private const val LEDGER = "ledger"
     private const val OPEN = "open"

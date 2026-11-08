@@ -1,4 +1,4 @@
-package com.example.drivoice.ui
+package com.example.ansimmileage.ui
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -84,7 +84,7 @@ val LocalPalette = staticCompositionLocalOf { DarkPalette }
 val LocalStill = staticCompositionLocalOf { false }
 
 @Composable
-fun DrivoiceTheme(still: Boolean, content: @Composable () -> Unit) {
+fun AnsimMileageTheme(still: Boolean, content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalPalette provides if (isSystemInDarkTheme()) DarkPalette else LightPalette,
         LocalStill provides still,
