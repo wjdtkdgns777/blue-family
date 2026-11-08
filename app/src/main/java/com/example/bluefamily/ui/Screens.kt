@@ -46,8 +46,6 @@ import com.example.bluefamily.MileageRule
 import com.example.bluefamily.R
 import com.example.bluefamily.Store
 import com.example.bluefamily.Sun
-import com.example.bluefamily.Turn
-import com.example.bluefamily.TurnRecord
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.ZoneId
@@ -94,16 +92,8 @@ private fun ConsentScreen(onAgree: () -> Unit, onLater: () -> Unit) {
     val palette = LocalPalette.current
     Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Space.xxl), contentAlignment = Alignment.Center) {
         Column(Modifier.widthIn(max = 1040.dp)) {
-            Text(stringResource(R.string.consent_title), Type.headline, palette.text, Modifier.enter(0))
+            Text(stringResource(R.string.consent_title), Type.title, palette.text, Modifier.enter(0))
             Spacer(Modifier.height(Space.l))
-            listOf(R.string.consent_line_1, R.string.consent_line_2, R.string.consent_line_3).forEachIndexed { index, line ->
-                Row(Modifier.padding(vertical = Space.xs).enter(index + 1)) {
-                    Text("${index + 1}", Type.bodyStrong, palette.accent, Modifier.width(48.dp))
-                    Text(stringResource(line), Type.body, palette.text)
-                }
-            }
-            Spacer(Modifier.height(Space.xl))
-            SectionHeader(stringResource(R.string.consent_data_title), null)
             Glass {
     listOf(
                     R.string.consent_vehicle to R.string.consent_vehicle_detail,
@@ -135,8 +125,6 @@ private fun DrivingScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(stringResource(R.string.driving_title), Type.headline, palette.text, align = TextAlign.Center)
-        Spacer(Modifier.height(Space.m))
-        Text(stringResource(R.string.driving_body), Type.body, palette.textSub, align = TextAlign.Center)
     }
 }
 
@@ -144,7 +132,7 @@ private fun DrivingScreen() {
 private fun ParkedScreen() {
     val palette = LocalPalette.current
     var tab by rememberSaveable { mutableIntStateOf(0) }
-    val tabs = listOf(R.string.tab_today, R.string.tab_before, R.string.tab_mileage, R.string.tab_family, R.string.tab_settings)
+    val tabs = listOf(R.string.tab_mileage, R.string.tab_before, R.string.tab_family, R.string.tab_settings)
     Column(Modifier.fillMaxSize().padding(horizontal = Space.xxl, vertical = Space.xl)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.product_name), Type.headline.copy(brush = palette.accentBrush), Color.Unspecified, Modifier.weight(1f))
@@ -160,10 +148,9 @@ private fun ParkedScreen() {
             label = "tab",
         ) { page ->
             when (page) {
-                0 -> TodayPage()
+                0 -> MileagePage()
                 1 -> BeforePage()
-                2 -> MileagePage()
-                3 -> FamilyPage()
+                2 -> FamilyPage()
                 else -> SettingsPage()
             }
         }
@@ -192,97 +179,6 @@ internal fun TwoColumns(left: @Composable ColumnScope.() -> Unit, right: @Compos
 }
 
 @Composable
-private fun TodayPage() {
-    val today = LocalDate.now()
-    val trips = Store.trips.filter { it.endedAt.toLocalDate() == today }
-    val turns = trips.flatMap { it.turns } + Drive.liveTurns
-    TwoColumns(
-        left = { TodaySummary(today, trips.any { it.nightM > 0 }, trips.any { it.highwayM > 0 }, trips.any { it.overLimit }) },
-        right = { TurnLog(turns) },
-    )
-}
-
-@Composable
-private fun TodaySummary(today: LocalDate, night: Boolean, highway: Boolean, overLimit: Boolean) {
-    val palette = LocalPalette.current
-    val conditions = Store.conditions
-    Text(stringResource(R.string.today_earned_label, shortDate(today)), Type.body, palette.textSub)
-    Row(verticalAlignment = Alignment.Bottom) {
-        RollingNumber(Store.earnedOn(today), Type.hero.copy(brush = palette.heroBrush), Color.Unspecified, prefix = "+", fromZero = true)
-        Spacer(Modifier.width(Space.s))
-        Text(stringResource(R.string.unit_mile), Type.title, palette.text, Modifier.padding(bottom = 18.dp))
-    }
-    Spacer(Modifier.height(Space.xs))
-    Text(stringResource(R.string.today_balance, Store.balance.grouped()), Type.body, palette.textSub)
-    Drive.summary?.let { summary ->
-        Spacer(Modifier.height(Space.l))
-        Column(Modifier.fillMaxWidth().enter(0).glass(palette).padding(Space.l)) {
-            Text(
-                if (summary.turns == 0) stringResource(R.string.summary_no_turns) else stringResource(R.string.summary_turns, summary.turns, summary.onTime),
-                Type.bodyStrong,
-                palette.text,
-            )
-            summary.missed?.let {
-                Text(stringResource(R.string.summary_tip, stringResource(if (it == Turn.LEFT) R.string.turn_left else R.string.turn_right)), Type.body, palette.textSub)
-            }
-        }
-    }
-    Spacer(Modifier.height(Space.xl))
-    SectionHeader(stringResource(R.string.kept_title), null)
-    val rows = listOf(
-        Triple(stringResource(R.string.condition_night), conditions.noNight, night),
-        Triple(stringResource(R.string.condition_highway), conditions.avoidHighway, highway),
-        Triple(stringResource(R.string.condition_rest, conditions.restMinutes), conditions.rest, overLimit),
-    )
-    Glass {
-    rows.forEachIndexed { index, (label, active, broken) ->
-            Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index + 1), verticalAlignment = Alignment.CenterVertically) {
-                Mark(active && !broken)
-                Spacer(Modifier.width(Space.m))
-                Text(label, Type.body, if (active) palette.text else palette.textSub, Modifier.weight(1f))
-                val status = when {
-                    !active -> R.string.condition_unused
-                    broken -> R.string.condition_broken
-                    else -> R.string.condition_kept
-                }
-                Text(stringResource(status), Type.body, if (status == R.string.condition_kept) palette.accent else palette.textSub)
-            }
-            if (index < rows.lastIndex) Hairline()
-        }
-    }
-}
-
-@Composable
-private fun TurnLog(records: List<TurnRecord>) {
-    val palette = LocalPalette.current
-    SectionHeader(stringResource(R.string.turns_title), if (records.isEmpty()) null else stringResource(R.string.turns_summary, records.size, records.count { it.onTime }))
-    if (records.isEmpty()) {
-        Text(stringResource(R.string.turns_empty), Type.body, palette.textSub, Modifier.padding(vertical = Space.m))
-    } else Glass {
-    records.asReversed().forEachIndexed { index, record ->
-            Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index + 3), verticalAlignment = Alignment.CenterVertically) {
-                Text(record.time.format(clock), Type.body, palette.textSub, Modifier.width(112.dp))
-                Text(stringResource(if (record.turn == Turn.LEFT) R.string.turn_left else R.string.turn_right), Type.body, palette.text, Modifier.width(132.dp))
-                Text(stringResource(if (record.onTime) R.string.turn_on_time else R.string.turn_late), Type.body, palette.textSub, Modifier.width(150.dp))
-                Text(if (record.guided) "" else stringResource(R.string.turn_unguided), Type.label, palette.textSub, Modifier.weight(1f))
-                val amount = when {
-                    !record.onTime -> 0
-                    record.guided -> MileageRule.TURN_ON_TIME
-                    else -> MileageRule.TURN_UNGUIDED
-                }
-                Text(
-                    if (amount > 0) stringResource(R.string.amount_plus, amount.toString()) else amount.toString(),
-                    Type.bodyStrong,
-                    if (amount > 0) palette.accent else palette.textSub,
-                    align = TextAlign.End,
-                )
-            }
-            if (index < records.lastIndex) Hairline()
-        }
-    }
-}
-
-@Composable
 internal fun SectionHeader(title: String, trailing: String?) {
     val palette = LocalPalette.current
     Row(Modifier.fillMaxWidth().padding(top = Space.s, bottom = Space.xs), verticalAlignment = Alignment.Bottom) {
@@ -306,17 +202,22 @@ private fun BeforePage() {
 @Composable
 private fun ConditionsEditor(conditions: Conditions, onChange: (Conditions) -> Unit) {
     val palette = LocalPalette.current
+    val trips = Store.trips.filter { it.endedAt.toLocalDate() == LocalDate.now() }
+    val kept = stringResource(R.string.condition_kept)
+    val notKept = stringResource(R.string.condition_broken)
+    // 오늘 운전했으면 켠 조건 아래에 지켰는지 보여 줍니다
+    fun result(active: Boolean, broken: Boolean) = if (active && trips.isNotEmpty()) (if (broken) notKept else kept) else null
     SectionHeader(stringResource(R.string.conditions_title), null)
     Glass {
-    SwitchRow(0, stringResource(R.string.condition_night), stringResource(R.string.conditions_night_detail), conditions.noNight) {
+    SwitchRow(0, stringResource(R.string.condition_night), result(conditions.noNight, trips.any { it.nightM > 0 }), conditions.noNight) {
             onChange(conditions.copy(noNight = it))
         }
         Hairline()
-        SwitchRow(1, stringResource(R.string.condition_highway), stringResource(R.string.conditions_highway_detail), conditions.avoidHighway) {
+        SwitchRow(1, stringResource(R.string.condition_highway), result(conditions.avoidHighway, trips.any { it.highwayM > 0 }), conditions.avoidHighway) {
             onChange(conditions.copy(avoidHighway = it))
         }
         Hairline()
-        SwitchRow(2, stringResource(R.string.conditions_rest_title), stringResource(R.string.conditions_rest_detail), conditions.rest) {
+        SwitchRow(2, stringResource(R.string.conditions_rest_title), result(conditions.rest, trips.any { it.overLimit }), conditions.rest) {
             onChange(conditions.copy(rest = it))
         }
         Row(Modifier.fillMaxWidth().padding(start = Space.m, bottom = Space.m).enter(3), verticalAlignment = Alignment.CenterVertically) {
@@ -336,8 +237,6 @@ private fun ConditionsEditor(conditions: Conditions, onChange: (Conditions) -> U
             }
         }
     }
-    Spacer(Modifier.height(Space.l))
-    Text(stringResource(R.string.conditions_family_note), Type.body, palette.textSub, Modifier.enter(4))
 }
 
 @Composable
@@ -348,18 +247,17 @@ private fun RouteStatus() {
     val sunset = Sun.sunset(LocalDate.now(), Sun.SEOUL_LAT, Sun.SEOUL_LON, ZoneId.systemDefault())
     val dash = stringResource(R.string.dash)
     SectionHeader(stringResource(R.string.route_title), null)
-    val rows = listOf(
+    val rows = listOfNotNull(
         stringResource(R.string.route_destination) to (route.destination ?: stringResource(R.string.route_none)),
-        stringResource(R.string.route_option) to when {
-            !conditions.avoidHighway || route.destination == null -> dash
+        (stringResource(R.string.route_option) to when {
             route.freeRoad == true -> stringResource(R.string.route_free)
             route.freeRoad == false -> stringResource(R.string.route_free_failed)
             route.freeRequested -> stringResource(R.string.route_free_requested)
             else -> dash
-        },
-        stringResource(R.string.route_arrival) to (route.arrival?.format(clock) ?: dash),
-        stringResource(R.string.route_sunset) to (sunset?.format(clock) ?: dash),
-        stringResource(R.string.route_continuous) to stringResource(R.string.route_continuous_value, (Drive.continuousMs / 60_000).toInt(), conditions.restMinutes),
+        }).takeIf { conditions.avoidHighway && route.destination != null },
+        route.arrival?.let { stringResource(R.string.route_arrival) to it.format(clock) },
+        (stringResource(R.string.route_sunset) to (sunset?.format(clock) ?: dash)).takeIf { conditions.noNight },
+        (stringResource(R.string.route_continuous) to stringResource(R.string.route_continuous_value, (Drive.continuousMs / 60_000).toInt(), conditions.restMinutes)).takeIf { conditions.rest },
     )
     Glass {
     rows.forEachIndexed { index, (label, value) ->
@@ -377,7 +275,7 @@ private fun RouteStatus() {
 }
 
 @Composable
-internal fun SwitchRow(index: Int, title: String, detail: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+internal fun SwitchRow(index: Int, title: String, detail: String?, checked: Boolean, onChange: (Boolean) -> Unit) {
     val palette = LocalPalette.current
     Pressable(
         onClick = { onChange(!checked) },
@@ -388,7 +286,7 @@ internal fun SwitchRow(index: Int, title: String, detail: String, checked: Boole
         Row(Modifier.fillMaxWidth().heightIn(min = 120.dp).padding(horizontal = Space.m), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(title, Type.bodyStrong, palette.text)
-                Text(detail, Type.label, palette.textSub)
+                if (detail != null) Text(detail, Type.label, palette.textSub)
             }
             Toggle(checked)
         }

@@ -276,13 +276,6 @@ fun Glass(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> 
 }
 
 @Composable
-fun Mark(on: Boolean, modifier: Modifier = Modifier) {
-    val palette = LocalPalette.current
-    val dot = modifier.size(16.dp)
-    Box(if (on) dot.lit(palette, CircleShape, Space.xs) else dot.border(2.dp, palette.line, CircleShape))
-}
-
-@Composable
 fun AdaptiveColumns(wideFrom: Dp, wide: @Composable () -> Unit, narrow: @Composable () -> Unit) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         if (maxWidth >= wideFrom) wide() else narrow()

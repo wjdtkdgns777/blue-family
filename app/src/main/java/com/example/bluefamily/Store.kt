@@ -20,7 +20,6 @@ data class Settings(
     val sound: Boolean = true,
     val voice: Boolean = true,
     val familyShare: Boolean = true,
-    val shareConditions: Boolean = false,
     val inviteCode: String = "",
 )
 
@@ -52,7 +51,6 @@ object Store {
             prefs.getBoolean(SOUND, true),
             prefs.getBoolean(VOICE, true),
             prefs.getBoolean(FAMILY_SHARE, true),
-            prefs.getBoolean(SHARE_CONDITIONS, false),
             prefs.getString(INVITE_CODE, null) ?: (100_000..999_999).random().toString().also { prefs.edit().putString(INVITE_CODE, it).apply() },
         )
         if (!file.baseFile.exists()) return
@@ -86,7 +84,6 @@ object Store {
             .putBoolean(SOUND, next.sound)
             .putBoolean(VOICE, next.voice)
             .putBoolean(FAMILY_SHARE, next.familyShare)
-            .putBoolean(SHARE_CONDITIONS, next.shareConditions)
             .apply()
     }
 
@@ -184,6 +181,5 @@ object Store {
     private const val SOUND = "sound"
     private const val VOICE = "voice"
     private const val FAMILY_SHARE = "familyShare"
-    private const val SHARE_CONDITIONS = "shareConditions"
     private const val INVITE_CODE = "inviteCode"
 }

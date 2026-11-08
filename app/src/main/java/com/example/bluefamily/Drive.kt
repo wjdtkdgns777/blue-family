@@ -39,7 +39,6 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import java.time.Duration
@@ -60,7 +59,6 @@ data class RouteState(
     val arrivesAfterSunset: Boolean = false,
 )
 
-data class Summary(val turns: Int, val onTime: Int, val miles: Int, val missed: Turn?)
 
 object Drive {
 
@@ -74,10 +72,9 @@ object Drive {
         private set
     var sessionOpen by mutableStateOf(false)
         private set
-    val liveTurns = mutableStateListOf<TurnRecord>()
+    private val liveTurns = mutableListOf<TurnRecord>()
     var continuousMs by mutableLongStateOf(0L)
         private set
-    var summary by mutableStateOf<Summary?>(null)
     var route by mutableStateOf(RouteState())
         private set
     var waypoints by mutableIntStateOf(0)
@@ -86,8 +83,6 @@ object Drive {
         private set
     var timeScale by mutableIntStateOf(1)
     var replaying by mutableStateOf(false)
-        private set
-    var debug by mutableStateOf("")
         private set
 
     private lateinit var context: Context
@@ -287,7 +282,6 @@ object Drive {
         beltUnsafe = false
         highway = false
         liveTurns.clear()
-        summary = null
         sessionOpen = true
         Store.saveOpen(snapshot())
         checkBelts()
@@ -327,7 +321,6 @@ object Drive {
         liveTurns.clear()
         val miles = txs.sumOf { it.miles }
         val missed = trip.turns.firstOrNull { !it.onTime }?.turn
-        summary = Summary(trip.turns.size, trip.turns.count { it.onTime }, miles, missed)
         val text = if (trip.turns.isEmpty()) context.getString(R.string.say_summary_no_turns, miles)
         else context.getString(R.string.say_summary, trip.turns.size, trip.turns.count { it.onTime }, miles)
         say(text)
@@ -347,7 +340,6 @@ object Drive {
         nextTurnType = type
         nextTurnM = if (type == null || type == TurnType.TURN_ARRIVE) null else distance
         judge.onNextTurn(type, distance)
-        debug = "$type ${distance.toInt()}m signal=$signal"
     }
 
     private val tick = object : Runnable {
@@ -417,6 +409,12 @@ object Drive {
     }
 
     private fun onDestination(info: DestinationInfo) {
+        // 경로가 없으면 내비가 빈 이름을 보냅니다
+        if (info.name.isBlank()) {
+            route = RouteState()
+            routeFor = null
+            return
+        }
         val arrival = LocalTime.now().plusSeconds(info.remainTime.toLong())
         val sunset = Sun.sunset(LocalDate.now(), lat, lon, ZonedDateTime.now().zone)
         val afterSunset = sunset != null && LocalTime.now().isBefore(sunset) && arrival.isAfter(sunset)
