@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.drivoice"
+    namespace = "com.example.ansimmileage"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.example.drivoice"
+        applicationId = "com.example.ansimmileage"
         minSdk = 28
         targetSdk = 37
         versionCode = 1

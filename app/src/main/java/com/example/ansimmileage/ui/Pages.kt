@@ -1,4 +1,4 @@
-package com.example.drivoice.ui
+package com.example.ansimmileage.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -28,14 +28,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.drivoice.Code
-import com.example.drivoice.Drive
-import com.example.drivoice.Mileage
-import com.example.drivoice.MileageRule
-import com.example.drivoice.R
-import com.example.drivoice.Store
-import com.example.drivoice.Tier
-import com.example.drivoice.Tx
+import com.example.ansimmileage.Code
+import com.example.ansimmileage.Drive
+import com.example.ansimmileage.Mileage
+import com.example.ansimmileage.MileageRule
+import com.example.ansimmileage.R
+import com.example.ansimmileage.Store
+import com.example.ansimmileage.Tier
+import com.example.ansimmileage.Tx
 import java.time.LocalDate
 
 @Composable

@@ -1,4 +1,4 @@
-package com.example.drivoice
+package com.example.ansimmileage
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -164,7 +164,7 @@ object Store {
 
     private fun tx(o: JSONObject) = Tx(o.getString("id"), LocalDateTime.parse(o.getString("at")), Code.valueOf(o.getString("code")), o.getInt("miles"), o.getInt("count"))
 
-    private const val NAME = "drivoice"
+    private const val NAME = "ansim_mileage"
     private const val TRIPS = "trips"
     private const val LEDGER = "ledger"
     private const val OPEN = "open"

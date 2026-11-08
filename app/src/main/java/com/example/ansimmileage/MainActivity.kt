@@ -1,4 +1,4 @@
-package com.example.drivoice
+package com.example.ansimmileage
 
 import android.Manifest
 import android.car.Car
@@ -8,8 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import com.example.drivoice.ui.DrivoiceApp
-import com.example.drivoice.ui.DrivoiceTheme
+import com.example.ansimmileage.ui.AnsimMileageApp
+import com.example.ansimmileage.ui.AnsimMileageTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -27,8 +27,8 @@ class MainActivity : ComponentActivity() {
         if (Store.settings.consented) requestMissing()
 
         setContent {
-            DrivoiceTheme(still = Drive.driving) {
-                DrivoiceApp(
+            AnsimMileageTheme(still = Drive.driving) {
+                AnsimMileageApp(
                     driving = Drive.driving,
                     onAgree = {
                         Store.update(Store.settings.copy(consented = true))

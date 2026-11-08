@@ -1,4 +1,4 @@
-package com.example.drivoice
+package com.example.ansimmileage
 
 import ai.pleos.playground.navi.constants.NavigationStatus
 import ai.pleos.playground.navi.constants.RouteOption
@@ -507,7 +507,7 @@ object Drive {
     private val YES_WORDS = listOf(R.string.yes_stop_by, R.string.yes_ok, R.string.yes_yes)
     private val NO_WORDS = listOf(R.string.no_not, R.string.no_dislike, R.string.no_no)
 
-    private const val TAG = "Drivoice"
+    private const val TAG = "AnsimMileage"
     private const val TICK_MS = 1_000L
     private const val MINUTE_MS = 60_000L
     private val REST_GAP_MS = Duration.ofMinutes(10).toMillis()

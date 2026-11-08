@@ -1,4 +1,4 @@
-package com.example.drivoice.ui
+package com.example.ansimmileage.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.EnterTransition

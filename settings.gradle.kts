@@ -24,5 +24,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Drivoice"
+rootProject.name = "AnsimMileage"
 include(":app")

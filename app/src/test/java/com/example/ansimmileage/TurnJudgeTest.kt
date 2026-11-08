@@ -1,4 +1,4 @@
-package com.example.drivoice
+package com.example.ansimmileage
 
 import ai.pleos.playground.navi.constants.TurnType
 import org.junit.Assert.assertEquals
