@@ -1,4 +1,4 @@
-package com.example.ansimmileage.ui
+package com.example.bluefamily.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -28,15 +28,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.ansimmileage.Code
-import com.example.ansimmileage.Drive
-import com.example.ansimmileage.Family
-import com.example.ansimmileage.Mileage
-import com.example.ansimmileage.MileageRule
-import com.example.ansimmileage.R
-import com.example.ansimmileage.Store
-import com.example.ansimmileage.Tier
-import com.example.ansimmileage.Tx
+import com.example.bluefamily.Code
+import com.example.bluefamily.Drive
+import com.example.bluefamily.Family
+import com.example.bluefamily.Mileage
+import com.example.bluefamily.MileageRule
+import com.example.bluefamily.R
+import com.example.bluefamily.Store
+import com.example.bluefamily.Tier
+import com.example.bluefamily.Tx
 import java.time.LocalDate
 import kotlin.math.roundToInt
 

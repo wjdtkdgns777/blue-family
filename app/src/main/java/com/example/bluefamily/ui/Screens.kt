@@ -1,4 +1,4 @@
-package com.example.ansimmileage.ui
+package com.example.bluefamily.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.EnterTransition
@@ -39,14 +39,14 @@ import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.ansimmileage.Conditions
-import com.example.ansimmileage.Drive
-import com.example.ansimmileage.MileageRule
-import com.example.ansimmileage.R
-import com.example.ansimmileage.Store
-import com.example.ansimmileage.Sun
-import com.example.ansimmileage.Turn
-import com.example.ansimmileage.TurnRecord
+import com.example.bluefamily.Conditions
+import com.example.bluefamily.Drive
+import com.example.bluefamily.MileageRule
+import com.example.bluefamily.R
+import com.example.bluefamily.Store
+import com.example.bluefamily.Sun
+import com.example.bluefamily.Turn
+import com.example.bluefamily.TurnRecord
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.ZoneId
@@ -62,7 +62,7 @@ internal fun Int.grouped(): String = NumberFormat.getIntegerInstance(Locale.KORE
 internal fun shortDate(date: LocalDate) = stringResource(R.string.date_short, date.monthValue, date.dayOfMonth)
 
 @Composable
-fun AnsimMileageApp(driving: Boolean, onAgree: () -> Unit, onLater: () -> Unit) {
+fun BlueFamilyApp(driving: Boolean, onAgree: () -> Unit, onLater: () -> Unit) {
     val palette = LocalPalette.current
     val page = when {
         !Store.settings.consented -> Page.CONSENT

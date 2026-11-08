@@ -1,4 +1,4 @@
-package com.example.ansimmileage
+package com.example.bluefamily
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

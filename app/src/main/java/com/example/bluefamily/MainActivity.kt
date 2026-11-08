@@ -1,4 +1,4 @@
-package com.example.ansimmileage
+package com.example.bluefamily
 
 import android.Manifest
 import android.car.Car
@@ -8,8 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import com.example.ansimmileage.ui.AnsimMileageApp
-import com.example.ansimmileage.ui.AnsimMileageTheme
+import com.example.bluefamily.ui.BlueFamilyApp
+import com.example.bluefamily.ui.BlueFamilyTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -27,8 +27,8 @@ class MainActivity : ComponentActivity() {
         if (Store.settings.consented) requestMissing()
 
         setContent {
-            AnsimMileageTheme(still = Drive.driving) {
-                AnsimMileageApp(
+            BlueFamilyTheme(still = Drive.driving) {
+                BlueFamilyApp(
                     driving = Drive.driving,
                     onAgree = {
                         Store.update(Store.settings.copy(consented = true))
