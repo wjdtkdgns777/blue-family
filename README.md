@@ -18,9 +18,9 @@
 
 <br>
 
-<img src=".github/readme/demo.gif" width="100%" alt="설정 탭에서 회전 안내 재생을 시작하고 기어를 D로 넣으면 주행 중 화면으로 바뀌고, 정차 후 운전석 문을 열면 오늘 쌓인 마일리지가 0에서 154로 올라가는 시연">
+<img src=".github/readme/demo.gif" width="100%" alt="설정 탭에서 회전 안내 재생을 시작하고 출발하면 주행 중 화면으로 바뀌고, 정차 후 운전석 문을 열면 오늘 쌓인 마일리지가 53마일로 올라가며 회전 3번 중 2번 제때 켰다는 요약이 나오고, 가족 탭에서 4대 결합과 가족별 안전 점수를 보여 주는 시연">
 
-<sub>Pleos Connect 에뮬레이터 v2.1.0에서 녹화했습니다. 출발 16초와 정차 뒤 13초를 이어 붙였습니다.</sub>
+<sub>Pleos Connect 에뮬레이터 v2.1.0에서 녹화했습니다. 출발 7초와 정차 뒤 22초를 이어 붙였습니다.</sub>
 
 </div>
 
@@ -257,7 +257,7 @@ Pleos SDK는 `https://nexus-playground.pleos.ai/repository/maven-releases/`에�
 |---|---|---|
 | 1 | 설정 탭에서 "지난 6일 기록 채우기" | Door Position: Close |
 | 2 | 설정 탭에서 "회전 안내 재생" 시작 | |
-| 3 | 주행 중 화면으로 바뀜 | Gear: D, ACCEL을 2초가량 누름 |
+| 3 | 주행 중 화면으로 바뀜 | Gear: N, 속도 40km/h. D로 넣으면 에뮬레이터가 내비를 앞으로 띄워서 N으로 시연합니다 |
 | 4 | | 재생 5초에 Turn Signal: Blink right, 20초에 Off |
 | 5 | | 재생 50초에 Blink left(늦게 켬), 53초에 Blink right |
 | 6 | | 재생 66초에 Off, Odometer를 12km 올림 |
