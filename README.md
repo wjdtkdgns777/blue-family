@@ -1,6 +1,6 @@
 <div align="center">
 
-# 한가족 마일리지
+# 블루 패밀리
 
 **현대차그룹 생태계의 첫 가족결합, 안전운전 마일리지**
 
@@ -14,7 +14,7 @@
 ![Tests](https://img.shields.io/badge/unit_tests-27_passed-0B7D54?style=flat-square)
 ![Offline](https://img.shields.io/badge/서버-없이_동작-555A62?style=flat-square)
 
-[APK 받기](apk/Drivoice_한가족마일리지_release.apk) | [시연 영상](.github/readme/demo.mp4) | [설치와 실행](#설치와-실행) | [시연 순서](#시연-순서)
+[APK 받기](apk/Drivoice_블루패밀리_release.apk) | [시연 영상](.github/readme/demo.mp4) | [설치와 실행](#설치와-실행) | [시연 순서](#시연-순서)
 
 <br>
 
@@ -28,7 +28,7 @@
 
 ## 요약
 
-한가족 마일리지는 통신사의 가족결합을 자동차에 옮긴 Pleos Connect 앱입니다. 깜빡이를 제때 켜고, 과속과 급제동 없이 달리고, 가족과 정한 운전 약속을 지키면 가족 지갑에 마일리지가 쌓입니다. 가족이 결합한 현대차, 기아 차가 한 대 늘 때마다 모든 적립에 10%가 더 붙고(최대 30%), 쌓인 마일리지는 다음 차 값, 현대카드 M포인트, 블루멤버스, 블루핸즈, E-pit 충전에 씁니다.
+블루 패밀리는 통신사의 가족결합을 자동차에 옮긴 Pleos Connect 앱입니다. 이름은 블루멤버스, 블루링크, 블루핸즈로 이어지는 현대차그룹의 '블루' 서비스 줄기에 가족을 더한다는 뜻입니다. 깜빡이를 제때 켜고, 과속과 급제동 없이 달리고, 가족과 정한 운전 약속을 지키면 가족 지갑에 마일리지가 쌓입니다. 가족이 결합한 현대차, 기아 차가 한 대 늘 때마다 모든 적립에 10%가 더 붙고(최대 30%), 쌓인 마일리지는 다음 차 값, 현대카드 M포인트, 블루멤버스, 블루핸즈, E-pit 충전에 씁니다.
 
 가족은 서로의 이번 주 안전 점수와 감점 횟수를 봅니다. 위치와 경로, 언제 어디서 감점됐는지는 차 밖으로 나가지 않습니다.
 
@@ -59,7 +59,7 @@
 | 위험운전과 사고 | 사고 운전자가 무사고 운전자보다 위험운전 약 1.5배 | [정책브리핑 2022-05-20](https://www.korea.kr/news/policyNewsView.do?newsId=148901825) |
 | 부모와 자녀의 운전 | 자녀의 위험운전 빈도는 부모의 빈도와 함께 움직이고, 기록을 가족에게 돌려주면 줄어듦 (166가구, 12개월) | [Taubman-Ben-Ari 외 2014](https://cris.iucc.ac.il/en/publications/the-contribution-of-parents-driving-behavior-family-climate-for-r/) |
 
-한가족 마일리지는 그 고리를 운전석 안에 만듭니다. 결합 혜택의 조건을 요금이 아니라 안전 운전에 두기 때문에, 가족이 포인트를 더 모으려 할수록 가족 모두의 운전이 안전해집니다.
+블루 패밀리는 그 고리를 운전석 안에 만듭니다. 결합 혜택의 조건을 요금이 아니라 안전 운전에 두기 때문에, 가족이 포인트를 더 모으려 할수록 가족 모두의 운전이 안전해집니다.
 
 <br>
 
@@ -211,20 +211,20 @@ Pleos 디자인 가이드의 값을 그대로 토큰으로 옮겼습니다(`ui/T
 | 항목 | 값 |
 |---|---|
 | 에뮬레이터 | Pleos Connect v2.1.0 (Android 14, API 34, 2560×1440) |
-| APK | [`apk/Drivoice_한가족마일리지_release.apk`](apk/Drivoice_한가족마일리지_release.apk) (release 빌드, 40MB). [Releases](https://github.com/wjdtkdgns777/ansim-mileage-private/releases/latest)에도 같은 파일이 있습니다 |
+| APK | [`apk/Drivoice_블루패밀리_release.apk`](apk/Drivoice_블루패밀리_release.apk) (release 빌드, 40MB). [Releases](https://github.com/wjdtkdgns777/blue-family-private/releases/latest)에도 같은 파일이 있습니다 |
 | 차량 값 조작 | Pleos Connect Virtual Console (`http://127.0.0.1:8088/`) |
 
 ### APK 설치
 
 ```bash
-adb install -r apk/Drivoice_한가족마일리지_release.apk
+adb install -r apk/Drivoice_블루패밀리_release.apk
 ```
 
 ```bash
 adb forward tcp:8088 tcp:8088
 ```
 
-앱 서랍에서 한가족 마일리지를 열고 "동의하고 시작"을 누릅니다. 이어서 뜨는 차속(위치 그룹)과 마이크 권한을 허용합니다. 차량 전용 앱(`android.hardware.type.automotive`)이라 휴대폰 에뮬레이터에는 설치되지 않습니다.
+앱 서랍에서 블루 패밀리를 열고 "동의하고 시작"을 누릅니다. 이어서 뜨는 차속(위치 그룹)과 마이크 권한을 허용합니다. 차량 전용 앱(`android.hardware.type.automotive`)이라 휴대폰 에뮬레이터에는 설치되지 않습니다.
 
 제출한 APK는 release 빌드입니다. 에뮬레이터 내비는 실제로 움직이지 않습니다. 그래서 회전 안내를 재생하는 시연 도구를 release 빌드의 설정 탭에도 넣었습니다. 서명은 Android 기본 디버그 키로 했습니다.
 
