@@ -24,6 +24,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -54,7 +55,7 @@ private fun Balance() {
     val tier = Mileage.tier(Store.ledger, Store.trips, today)
     Text(stringResource(R.string.balance_label), Type.body, palette.textSub)
     Row(verticalAlignment = Alignment.Bottom) {
-        RollingNumber(balance, Type.hero, palette.text, fromZero = true)
+        RollingNumber(balance, Type.hero.copy(brush = palette.heroBrush), Color.Unspecified, fromZero = true)
         Spacer(Modifier.width(Space.s))
         Text(stringResource(R.string.unit_mile), Type.title, palette.text, Modifier.padding(bottom = 18.dp))
     }
@@ -75,7 +76,7 @@ private fun Balance() {
     val fill = remember { Animatable(if (still) target else 0f) }
     LaunchedEffect(target) { fill.animateTo(target, tween(Motion.LONG2 * 2, Motion.MEDIUM1, Motion.easing)) }
     Box(Modifier.fillMaxWidth().height(12.dp).clip(CircleShape).background(palette.line)) {
-        Box(Modifier.fillMaxWidth(fill.value).fillMaxHeight().clip(CircleShape).background(palette.accent))
+        Box(Modifier.fillMaxWidth(fill.value).fillMaxHeight().clip(CircleShape).background(palette.accentBrush))
     }
     Spacer(Modifier.height(Space.m))
     Text(stringResource(rule as Int), Type.label, palette.textSub)
@@ -90,12 +91,14 @@ private fun Ledger() {
     var index = 0
     entries.groupBy { it.at.toLocalDate() }.forEach { (date, txs) ->
         Text(shortDate(date), Type.label, palette.textSub, Modifier.padding(top = Space.m, bottom = Space.xs).enter(index++))
-        txs.forEach { tx ->
-            Row(Modifier.fillMaxWidth().heightIn(min = 76.dp).enter(index++), verticalAlignment = Alignment.CenterVertically) {
-                Text(tx.title(), Type.body, palette.text, Modifier.weight(1f))
-                Text(stringResource(R.string.amount_plus, tx.miles.grouped()), Type.bodyStrong, palette.text)
+        Glass {
+            txs.forEachIndexed { i, tx ->
+                Row(Modifier.fillMaxWidth().heightIn(min = 76.dp).enter(index++), verticalAlignment = Alignment.CenterVertically) {
+                    Text(tx.title(), Type.body, palette.text, Modifier.weight(1f))
+                    Text(stringResource(R.string.amount_plus, tx.miles.grouped()), Type.bodyStrong, palette.text)
+                }
+                if (i < txs.lastIndex) Hairline()
             }
-            Hairline()
         }
     }
 }
@@ -117,19 +120,21 @@ private fun Tx.title() = when (code) {
 internal fun RestPlaces() {
     val palette = LocalPalette.current
     SectionHeader(stringResource(R.string.rest_places_title), null)
+    Glass {
     Drive.places.forEachIndexed { index, place ->
-        Row(Modifier.fillMaxWidth().heightIn(min = 112.dp).enter(index), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(place.name), Type.bodyStrong, palette.text)
-                Text(stringResource(R.string.km, "%.1f".format(Drive.distanceKm(place))), Type.label, palette.textSub)
+            Row(Modifier.fillMaxWidth().heightIn(min = 112.dp).enter(index), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(place.name), Type.bodyStrong, palette.text)
+                    Text(stringResource(R.string.km, "%.1f".format(Drive.distanceKm(place))), Type.label, palette.textSub)
+                }
+                if (Drive.pendingPlace == place) {
+                    Text(stringResource(R.string.waypoint_added), Type.body, palette.accent)
+                } else {
+                    ActionButton(stringResource(R.string.add_waypoint), { Drive.addRestStop(place) })
+                }
             }
-            if (Drive.pendingPlace == place) {
-                Text(stringResource(R.string.waypoint_added), Type.body, palette.accent)
-            } else {
-                ActionButton(stringResource(R.string.add_waypoint), { Drive.addRestStop(place) })
-            }
+            if (index < Drive.places.lastIndex) Hairline()
         }
-        Hairline()
     }
     Spacer(Modifier.height(Space.m))
     Text(stringResource(R.string.rest_places_note), Type.body, palette.textSub, Modifier.enter(Drive.places.size))
@@ -146,20 +151,22 @@ internal fun FamilyPage() {
     TwoColumns(
         left = {
             Text(stringResource(R.string.family_bundle_title), Type.body, palette.textSub)
-            Text(stringResource(R.string.family_bundle_value, Family.cars), Type.title, palette.text, Modifier.enter(0))
+            Text(stringResource(R.string.family_bundle_value, Family.cars), Type.title.copy(brush = palette.accentBrush), Color.Unspecified, Modifier.enter(0))
             Text(stringResource(R.string.family_bundle_bonus, (Mileage.familyRate(Family.cars) * 100).roundToInt()), Type.bodyStrong, palette.accent, Modifier.enter(1))
             Text(stringResource(R.string.family_bundle_rule), Type.label, palette.textSub, Modifier.enter(2))
             Spacer(Modifier.height(Space.xl))
             SectionHeader(stringResource(R.string.family_scores_title), null)
-            (listOf(me) + Family.others).forEachIndexed { index, member ->
-                Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index + 3), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("${stringResource(member.name)}  ${stringResource(member.car)}", Type.bodyStrong, palette.text)
-                        Text(stringResource(R.string.family_penalties, member.speeding, member.hardBrakes, member.missedSignals, member.beltOff), Type.label, palette.textSub)
+            Glass {
+    (listOf(me) + Family.others).forEachIndexed { index, member ->
+                    Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index + 3), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("${stringResource(member.name)}  ${stringResource(member.car)}", Type.bodyStrong, palette.text)
+                            Text(stringResource(R.string.family_penalties, member.speeding, member.hardBrakes, member.missedSignals, member.beltOff), Type.label, palette.textSub)
+                        }
+                        Text(stringResource(R.string.family_score, member.score), Type.bodyStrong, palette.text)
                     }
-                    Text(stringResource(R.string.family_score, member.score), Type.bodyStrong, palette.text)
+                    if (index < Family.others.size) Hairline()
                 }
-                Hairline()
             }
             Text(stringResource(R.string.family_demo_note), Type.label, palette.textSub, Modifier.padding(top = Space.m))
         },
@@ -168,14 +175,15 @@ internal fun FamilyPage() {
             Text(settings.inviteCode.chunked(3).joinToString(" "), Type.title, palette.text)
             Text(stringResource(R.string.family_code_note), Type.label, palette.textSub)
             Spacer(Modifier.height(Space.m))
-            SwitchRow(0, stringResource(R.string.family_share), stringResource(R.string.family_share_detail), settings.familyShare) {
-                Store.update(settings.copy(familyShare = it))
+            Glass {
+    SwitchRow(0, stringResource(R.string.family_share), stringResource(R.string.family_share_detail), settings.familyShare) {
+                    Store.update(settings.copy(familyShare = it))
+                }
+                Hairline()
+                SwitchRow(1, stringResource(R.string.family_share_conditions), stringResource(R.string.family_share_conditions_detail), settings.shareConditions) {
+                    Store.update(settings.copy(shareConditions = it))
+                }
             }
-            Hairline()
-            SwitchRow(1, stringResource(R.string.family_share_conditions), stringResource(R.string.family_share_conditions_detail), settings.shareConditions) {
-                Store.update(settings.copy(shareConditions = it))
-            }
-            Hairline()
             Spacer(Modifier.height(Space.xl))
             SectionHeader(stringResource(R.string.family_visible_title), null)
             val tier = when (Mileage.tier(Store.ledger, Store.trips, today)) {
@@ -192,12 +200,14 @@ internal fun FamilyPage() {
                     add(stringResource(R.string.badge_signal) to stringResource(if (signalGood) R.string.badge_earned else R.string.badge_not_yet))
                 }
             }
-            rows.forEachIndexed { index, (label, value) ->
-                Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index), verticalAlignment = Alignment.CenterVertically) {
-                    Text(label, Type.body, palette.text, Modifier.weight(1f))
-                    Text(value, Type.bodyStrong, if (value == stringResource(R.string.badge_earned)) palette.accent else palette.text, align = TextAlign.End)
+            Glass {
+    rows.forEachIndexed { index, (label, value) ->
+                    Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index), verticalAlignment = Alignment.CenterVertically) {
+                        Text(label, Type.body, palette.text, Modifier.weight(1f))
+                        Text(value, Type.bodyStrong, if (value == stringResource(R.string.badge_earned)) palette.accent else palette.text, align = TextAlign.End)
+                    }
+                    if (index < rows.lastIndex) Hairline()
                 }
-                Hairline()
             }
             if (!settings.familyShare) {
                 Text(stringResource(R.string.family_balance_only), Type.body, palette.textSub, Modifier.padding(top = Space.m))
@@ -218,14 +228,15 @@ internal fun SettingsPage() {
     TwoColumns(
         left = {
             SectionHeader(stringResource(R.string.settings_title), null)
-            SwitchRow(0, stringResource(R.string.settings_sound), stringResource(R.string.settings_sound_detail), settings.sound) {
-                Store.update(settings.copy(sound = it))
+            Glass {
+    SwitchRow(0, stringResource(R.string.settings_sound), stringResource(R.string.settings_sound_detail), settings.sound) {
+                    Store.update(settings.copy(sound = it))
+                }
+                Hairline()
+                SwitchRow(1, stringResource(R.string.settings_voice), stringResource(R.string.settings_voice_detail), settings.voice) {
+                    Store.update(settings.copy(voice = it))
+                }
             }
-            Hairline()
-            SwitchRow(1, stringResource(R.string.settings_voice), stringResource(R.string.settings_voice_detail), settings.voice) {
-                Store.update(settings.copy(voice = it))
-            }
-            Hairline()
             Spacer(Modifier.height(Space.l))
             Text(stringResource(R.string.settings_privacy), Type.body, palette.textSub, Modifier.enter(2))
             Spacer(Modifier.height(Space.m))
@@ -244,21 +255,23 @@ internal fun SettingsPage() {
         },
         right = {
             SectionHeader(stringResource(R.string.demo_title), null)
-            DemoRow(0, R.string.demo_replay, R.string.demo_replay_detail) {
-                ActionButton(stringResource(if (Drive.replaying) R.string.stop else R.string.start), { if (Drive.replaying) Drive.stopReplay() else Drive.replay() })
-            }
-            Hairline()
-            SwitchRow(1, stringResource(R.string.demo_fast), stringResource(R.string.demo_fast_detail), Drive.timeScale > 1) {
-                Drive.timeScale = if (it) DEMO_SCALE else 1
-            }
-            Hairline()
-            DemoRow(2, R.string.demo_seed, null) {
-                if (seeded) Text(stringResource(R.string.demo_seed_done), Type.body, palette.accent)
-                else ActionButton(stringResource(R.string.start), { Drive.seedHistory(); seeded = true })
-            }
-            Hairline()
-            DemoRow(3, R.string.demo_state, null) {
-                Text(Drive.debug, Type.label, palette.textSub)
+            Glass {
+    DemoRow(0, R.string.demo_replay, R.string.demo_replay_detail) {
+                    ActionButton(stringResource(if (Drive.replaying) R.string.stop else R.string.start), { if (Drive.replaying) Drive.stopReplay() else Drive.replay() })
+                }
+                Hairline()
+                SwitchRow(1, stringResource(R.string.demo_fast), stringResource(R.string.demo_fast_detail), Drive.timeScale > 1) {
+                    Drive.timeScale = if (it) DEMO_SCALE else 1
+                }
+                Hairline()
+                DemoRow(2, R.string.demo_seed, null) {
+                    if (seeded) Text(stringResource(R.string.demo_seed_done), Type.body, palette.accent)
+                    else ActionButton(stringResource(R.string.start), { Drive.seedHistory(); seeded = true })
+                }
+                Hairline()
+                DemoRow(3, R.string.demo_state, null) {
+                    Text(Drive.debug, Type.label, palette.textSub)
+                }
             }
         },
     )
