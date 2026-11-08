@@ -110,52 +110,29 @@ private fun Tx.title() = when (code) {
     Code.STREAK -> stringResource(R.string.ledger_streak)
     Code.PARTNER -> stringResource(R.string.ledger_partner)
     Code.FAMILY -> stringResource(R.string.ledger_family)
+    Code.BELT -> stringResource(R.string.ledger_belt, count)
 }
 
 @Composable
-internal fun UsesPage() {
+internal fun RestPlaces() {
     val palette = LocalPalette.current
-    TwoColumns(
-        left = {
-            SectionHeader(stringResource(R.string.uses_title), null)
-            listOf(
-                R.string.use_next_car to R.string.use_next_car_detail,
-                R.string.use_mpoint to R.string.use_mpoint_detail,
-                R.string.use_bluemembers to R.string.use_bluemembers_detail,
-                R.string.use_bluehands to R.string.use_bluehands_detail,
-                R.string.use_epit to R.string.use_epit_detail,
-                R.string.use_insurance to R.string.use_insurance_detail,
-            ).forEachIndexed { index, (title, detail) ->
-                Row(Modifier.fillMaxWidth().heightIn(min = 112.dp).enter(index), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(title), Type.bodyStrong, palette.text)
-                        Text(stringResource(detail), Type.label, palette.textSub)
-                    }
-                    Text(stringResource(R.string.use_status), Type.label, palette.textSub)
-                }
-                Hairline()
+    SectionHeader(stringResource(R.string.rest_places_title), null)
+    Drive.places.forEachIndexed { index, place ->
+        Row(Modifier.fillMaxWidth().heightIn(min = 112.dp).enter(index), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(place.name), Type.bodyStrong, palette.text)
+                Text(stringResource(R.string.km, "%.1f".format(Drive.distanceKm(place))), Type.label, palette.textSub)
             }
-        },
-        right = {
-            SectionHeader(stringResource(R.string.rest_places_title), null)
-            Drive.places.forEachIndexed { index, place ->
-                Row(Modifier.fillMaxWidth().heightIn(min = 112.dp).enter(index), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(place.name), Type.bodyStrong, palette.text)
-                        Text(stringResource(R.string.km, "%.1f".format(Drive.distanceKm(place))), Type.label, palette.textSub)
-                    }
-                    if (Drive.pendingPlace == place) {
-                        Text(stringResource(R.string.waypoint_added), Type.body, palette.accent)
-                    } else {
-                        ActionButton(stringResource(R.string.add_waypoint), { Drive.addRestStop(place) })
-                    }
-                }
-                Hairline()
+            if (Drive.pendingPlace == place) {
+                Text(stringResource(R.string.waypoint_added), Type.body, palette.accent)
+            } else {
+                ActionButton(stringResource(R.string.add_waypoint), { Drive.addRestStop(place) })
             }
-            Spacer(Modifier.height(Space.m))
-            Text(stringResource(R.string.rest_places_note), Type.body, palette.textSub, Modifier.enter(Drive.places.size))
-        },
-    )
+        }
+        Hairline()
+    }
+    Spacer(Modifier.height(Space.m))
+    Text(stringResource(R.string.rest_places_note), Type.body, palette.textSub, Modifier.enter(Drive.places.size))
 }
 
 @Composable
@@ -178,7 +155,7 @@ internal fun FamilyPage() {
                 Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index + 3), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("${stringResource(member.name)}  ${stringResource(member.car)}", Type.bodyStrong, palette.text)
-                        Text(stringResource(R.string.family_penalties, member.speeding, member.hardBrakes, member.missedSignals), Type.label, palette.textSub)
+                        Text(stringResource(R.string.family_penalties, member.speeding, member.hardBrakes, member.missedSignals, member.beltOff), Type.label, palette.textSub)
                     }
                     Text(stringResource(R.string.family_score, member.score), Type.bodyStrong, palette.text)
                 }

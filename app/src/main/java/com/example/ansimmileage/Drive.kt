@@ -14,11 +14,15 @@ import ai.pleos.playground.navi.helper.NaviHelper
 import ai.pleos.playground.navi.helper.listener.NaviHelperEventListener
 import ai.pleos.playground.vehicle.Vehicle
 import ai.pleos.playground.vehicle.api.model.area.DoorArea
+import ai.pleos.playground.vehicle.api.model.area.SeatArea
 import ai.pleos.playground.vehicle.constant.area.DoorValue
+import ai.pleos.playground.vehicle.constant.area.SeatValue
 import ai.pleos.playground.vehicle.constant.area.TurnSignalValue
 import ai.pleos.playground.vehicle.listener.BrakePedalStatusListener
 import ai.pleos.playground.vehicle.listener.DistanceDrivenListener
 import ai.pleos.playground.vehicle.listener.DoorPositionListener
+import ai.pleos.playground.vehicle.listener.SeatBeltBuckledStateListener
+import ai.pleos.playground.vehicle.listener.SeatOccupancyListener
 import ai.pleos.playground.vehicle.listener.TurnSignalStateListener
 import android.car.Car
 import android.car.VehiclePropertyIds
@@ -95,6 +99,9 @@ object Drive {
     private val judge = TurnJudge(LocalTime::now, ::onTurn)
     private val unguided = UnguidedTurnJudge(LocalTime::now, ::onTurn)
     private val driverDoor = DoorArea(DoorValue.ROW_1_LEFT)
+    private val seats = listOf(SeatValue.ROW_1_LEFT, SeatValue.ROW_1_RIGHT, SeatValue.ROW_2_LEFT, SeatValue.ROW_2_CENTER, SeatValue.ROW_2_RIGHT)
+    private val buckled = mutableMapOf<SeatValue, Boolean>()
+    private val occupied = mutableMapOf(SeatValue.ROW_1_LEFT to true)
 
     private var started = false
     private var uxKnown = false
@@ -124,6 +131,9 @@ object Drive {
     private var hardBrakes = 0
     private var speedingSinceMs = 0L
     private var speedAtMs = 0L
+    private var beltOff = 0
+    private var beltedSeats = 0
+    private var beltUnsafe = false
     private var rests = 0
     private var lastClosedMs = 0L
     private var restPrompts = 0
@@ -165,6 +175,10 @@ object Drive {
         vehicle.getBrake().registerBrakePedalStatus(brakeListener)
         vehicle.getDoor().registerDoorPosition(driverDoor, doorListener)
         vehicle.getOdometer().registerDistanceDriven(odometerListener)
+        seats.forEach { seat ->
+            vehicle.getSeat().registerSeatBeltBuckledState(SeatArea(seat), beltListener(seat))
+            if (seat != SeatValue.ROW_1_LEFT) vehicle.getSeat().registerSeatOccupancy(SeatArea(seat), occupancyListener(seat))
+        }
 
         navi = NaviHelper(context)
         navi.initialize({ navi.getTBTInfo(); navi.getDestinationInfo(); navi.getWaypointInfo() }, { Log.e(TAG, "navi", it) })
@@ -229,7 +243,7 @@ object Drive {
         for (back in 6 downTo 1) {
             val end = today.minusDays(back.toLong()).atTime(15, 10)
             val turns = List(6 + back % 3) { TurnRecord(LocalTime.of(14, 30).plusMinutes(it * 3L), if (it % 2 == 0) Turn.RIGHT else Turn.LEFT, !(back == 4 && it == 1)) }
-            val trip = Trip("seed-$back", end.minusMinutes(40), end, (14 + back * 3) * 1000.0, 0.0, 0.0, false, if (back % 2 == 0) 1 else 0, turns, speeding = if (back == 3) 1 else 0, hardBrakes = if (back == 5) 1 else 0)
+            val trip = Trip("seed-$back", end.minusMinutes(40), end, (14 + back * 3) * 1000.0, 0.0, 0.0, false, if (back % 2 == 0) 1 else 0, turns, speeding = if (back == 3) 1 else 0, hardBrakes = if (back == 5) 1 else 0, beltedSeats = 1 + back % 2)
             Store.add(trip, Mileage.forTrip(trip, Store.conditions, Store.trips.toList(), Store.ledger.toList()))
         }
     }
@@ -238,6 +252,7 @@ object Drive {
         uxKnown = true
         driving = restricted
         updateSession()
+        checkBelts()
     }
 
     private fun updateSession() {
@@ -267,14 +282,35 @@ object Drive {
         speeding = 0
         hardBrakes = 0
         speedingSinceMs = 0L
+        beltOff = 0
+        beltedSeats = 0
+        beltUnsafe = false
         highway = false
         liveTurns.clear()
         summary = null
         sessionOpen = true
         Store.saveOpen(snapshot())
+        checkBelts()
     }
 
-    private fun snapshot() = Trip(sessionId, sessionStart, LocalDateTime.now(), distanceM, nightM, highwayM, overLimit, rests, liveTurns.toList(), speeding, hardBrakes)
+    private fun checkBelts() {
+        if (!sessionOpen || !driving) return
+        val seated = seats.filter { occupied[it] == true }
+        if (seated.any { buckled[it] != true }) beltUnsafe = true
+        beltedSeats = maxOf(beltedSeats, seated.count { buckled[it] == true })
+    }
+
+    private fun onBelt(seat: SeatValue, state: Boolean) {
+        val unbuckled = buckled[seat] == true && !state
+        buckled[seat] = state
+        if (unbuckled && sessionOpen && driving && occupied[seat] == true) {
+            beltOff++
+            Store.saveOpen(snapshot())
+        }
+        checkBelts()
+    }
+
+    private fun snapshot() = Trip(sessionId, sessionStart, LocalDateTime.now(), distanceM, nightM, highwayM, overLimit, rests, liveTurns.toList(), speeding, hardBrakes, beltOff, if (beltUnsafe) 0 else beltedSeats)
 
     private fun settle(trip: Trip) {
         Store.add(trip, Mileage.forTrip(trip, Store.conditions, Store.trips.toList(), Store.ledger.toList(), familyRate()))
@@ -449,6 +485,25 @@ object Drive {
         }
 
         override fun onFailed(e: Exception) = fail("door", e)
+    }
+
+    private fun beltListener(seat: SeatValue) = object : SeatBeltBuckledStateListener {
+        override fun onSeatBeltBuckledStateUpdated(state: Boolean?) {
+            if (state != null) main.post { onBelt(seat, state) }
+        }
+
+        override fun onFailed(e: Exception) = fail("belt $seat", e)
+    }
+
+    private fun occupancyListener(seat: SeatValue) = object : SeatOccupancyListener {
+        override fun onSeatOccupancyUpdated(state: Boolean?) {
+            if (state != null) main.post {
+                occupied[seat] = state
+                checkBelts()
+            }
+        }
+
+        override fun onFailed(e: Exception) = fail("seat $seat", e)
     }
 
     private val odometerListener = object : DistanceDrivenListener {

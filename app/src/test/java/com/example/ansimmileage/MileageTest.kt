@@ -56,6 +56,18 @@ class MileageTest {
     }
 
     @Test
+    fun allBeltsBuckledEarnsPerSeat() {
+        val txs = Mileage.forTrip(trip().copy(beltedSeats = 3), Conditions(), emptyList(), emptyList())
+        assertEquals(20, miles(txs, Code.BELT))
+    }
+
+    @Test
+    fun beltOffEarnsNoBeltMiles() {
+        val txs = Mileage.forTrip(trip().copy(beltedSeats = 2, beltOff = 1), Conditions(), emptyList(), emptyList())
+        assertEquals(0, miles(txs, Code.BELT))
+    }
+
+    @Test
     fun familyRateGrowsPerCarUpToThirtyPercent() {
         assertEquals(0.0, Mileage.familyRate(1), 1e-9)
         assertEquals(0.1, Mileage.familyRate(2), 1e-9)
@@ -64,8 +76,8 @@ class MileageTest {
 
     @Test
     fun scoreDeductsPenaltiesAndStopsAtZero() {
-        assertEquals(84, Mileage.score(speeding = 2, hardBrakes = 1, missedSignals = 1))
-        assertEquals(0, Mileage.score(speeding = 30, hardBrakes = 0, missedSignals = 0))
+        assertEquals(79, Mileage.score(speeding = 2, hardBrakes = 1, missedSignals = 1, beltOff = 1))
+        assertEquals(0, Mileage.score(speeding = 30, hardBrakes = 0, missedSignals = 0, beltOff = 0))
     }
 
     @Test

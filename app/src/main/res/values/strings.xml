@@ -5,7 +5,6 @@
     <string name="tab_today">오늘 운전</string>
     <string name="tab_before">출발 전</string>
     <string name="tab_mileage">마일리지</string>
-    <string name="tab_uses">쓰는 곳</string>
     <string name="tab_family">가족</string>
     <string name="tab_settings">설정</string>
 
@@ -82,21 +81,8 @@
     <string name="ledger_streak">7일 연속 조건 지킴</string>
     <string name="ledger_partner">제휴처 방문</string>
     <string name="ledger_family">가족 결합 추가 적립</string>
+    <string name="ledger_belt">전 좌석 안전벨트 %1$d석</string>
 
-    <string name="uses_title">마일리지 쓰는 곳</string>
-    <string name="use_bluehands">블루핸즈 정비</string>
-    <string name="use_bluehands_detail">정비 결제 때 차감합니다</string>
-    <string name="use_next_car">다음 차 구매</string>
-    <string name="use_next_car_detail">차량 구매 때 현금처럼 씁니다</string>
-    <string name="use_mpoint">현대카드 M포인트 연동</string>
-    <string name="use_mpoint_detail">카드 포인트와 합쳐 차 값에 씁니다</string>
-    <string name="use_epit">E-pit 충전</string>
-    <string name="use_epit_detail">충전 요금에서 차감합니다</string>
-    <string name="use_bluemembers">블루멤버스 포인트 전환</string>
-    <string name="use_bluemembers_detail">블루멤버스 포인트로 바꿉니다</string>
-    <string name="use_insurance">보험 안전 운전 특약</string>
-    <string name="use_insurance_detail">등급을 특약 근거로 냅니다</string>
-    <string name="use_status">제휴 협의 중</string>
     <string name="rest_places_title">쉬어 갈 곳</string>
     <string name="rest_places_note">경유지에 도착해 운전석 문을 열면 방문으로 보고 30마일을 드립니다.</string>
     <string name="km">%1$skm</string>
@@ -123,7 +109,7 @@
     <string name="family_bundle_rule" formatted="false">결합한 차가 한 대 늘 때마다 10%씩, 최대 30%까지 더 쌓입니다.</string>
     <string name="family_scores_title">이번 주 안전 점수</string>
     <string name="family_score">%1$d점</string>
-    <string name="family_penalties">과속 %1$d번, 급제동 %2$d번, 깜빡이 놓침 %3$d번</string>
+    <string name="family_penalties">과속 %1$d번, 급제동 %2$d번, 깜빡이 놓침 %3$d번, 벨트 풀림 %4$d번</string>
     <string name="family_demo_note">다른 가족의 점수는 서버를 잇기 전이라 예시로 보여 줍니다.</string>
     <string name="family_my_score">내 안전 점수</string>
     <string name="member_me">나</string>
@@ -160,12 +146,12 @@
     <string name="stop">멈춤</string>
 
     <string name="consent_title">안전하게 운전한 만큼 마일리지가 쌓입니다</string>
-    <string name="consent_line_1">깜빡이를 제때 켜고 과속과 급제동 없이 달리면 마일리지가 쌓입니다.</string>
+    <string name="consent_line_1">모두 안전벨트를 매고, 깜빡이를 제때 켜고, 과속과 급제동 없이 달리면 마일리지가 쌓입니다.</string>
     <string name="consent_line_2">스스로 정한 조건을 지키고, 오래 달렸으면 쉬면 더 쌓입니다.</string>
     <string name="consent_line_3">가족이 결합하면 더 쌓이고, 안전 점수는 가족과 함께 봅니다.</string>
     <string name="consent_data_title">이 앱이 쓰는 정보</string>
     <string name="consent_vehicle">차량 정보</string>
-    <string name="consent_vehicle_detail">깜빡이, 속도, 브레이크, 문, 주행 거리를 판정에만 씁니다</string>
+    <string name="consent_vehicle_detail">깜빡이, 속도, 브레이크, 안전벨트, 문, 주행 거리를 판정에만 씁니다</string>
     <string name="consent_location">위치</string>
     <string name="consent_location_detail">야간 판정과 쉼터 거리 계산에만 쓰고 차 밖으로 보내지 않습니다</string>
     <string name="consent_mic">마이크</string>
