@@ -120,36 +120,10 @@ private fun Tx.title() = when (code) {
     Code.TURN -> stringResource(R.string.ledger_turns, count)
     Code.TURN_UNGUIDED -> stringResource(R.string.ledger_turns_unguided, count)
     Code.DISTANCE -> stringResource(if (miles > count) R.string.ledger_distance_double else R.string.ledger_distance, count)
-    Code.REST -> stringResource(R.string.ledger_rest)
-    Code.KEPT_DAY -> stringResource(R.string.ledger_kept_day)
+    Code.SAFE_DAY -> stringResource(R.string.ledger_safe_day)
     Code.STREAK -> stringResource(R.string.ledger_streak)
-    Code.PARTNER -> stringResource(R.string.ledger_partner)
     Code.FAMILY -> stringResource(R.string.ledger_family)
     Code.BELT -> stringResource(R.string.ledger_belt, count)
-}
-
-@Composable
-internal fun RestPlaces() {
-    val palette = LocalPalette.current
-    SectionHeader(stringResource(R.string.rest_places_title), null)
-    Glass {
-    Drive.places.forEachIndexed { index, place ->
-            Row(Modifier.fillMaxWidth().heightIn(min = 112.dp).enter(index), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(place.name), Type.bodyStrong, palette.text)
-                    Text(stringResource(R.string.km, "%.1f".format(Drive.distanceKm(place))), Type.label, palette.textSub)
-                }
-                if (Drive.pendingPlace == place) {
-                    Text(stringResource(R.string.waypoint_added), Type.body, palette.accent)
-                } else {
-                    ActionButton(stringResource(R.string.add_waypoint), { Drive.addRestStop(place) })
-                }
-            }
-            if (index < Drive.places.lastIndex) Hairline()
-        }
-    }
-    Spacer(Modifier.height(Space.m))
-    Text(stringResource(R.string.rest_places_note), Type.body, palette.textSub, Modifier.enter(Drive.places.size))
 }
 
 @Composable
@@ -160,7 +134,7 @@ internal fun FamilyPage() {
     TwoColumns(
         left = {
             Text(stringResource(R.string.family_bundle_title), Type.body, palette.textSub)
-            Text(stringResource(R.string.family_bundle_value, Family.cars), Type.title.copy(brush = palette.accentBrush), Color.Unspecified, Modifier.enter(0))
+            Text(stringResource(R.string.family_bundle_value, Family.cars), Type.title, palette.text, Modifier.enter(0))
             Text(stringResource(R.string.family_bundle_bonus, (Mileage.familyRate(Family.cars) * 100).roundToInt()), Type.bodyStrong, palette.accent, Modifier.enter(1))
             Spacer(Modifier.height(Space.xl))
             SectionHeader(stringResource(R.string.family_scores_title), null)
@@ -233,11 +207,7 @@ internal fun SettingsPage() {
                     ActionButton(stringResource(if (Drive.replaying) R.string.stop else R.string.start), { if (Drive.replaying) Drive.stopReplay() else Drive.replay() })
                 }
                 Hairline()
-                SwitchRow(1, stringResource(R.string.demo_fast), stringResource(R.string.demo_fast_detail), Drive.timeScale > 1) {
-                    Drive.timeScale = if (it) DEMO_SCALE else 1
-                }
-                Hairline()
-                DemoRow(2, R.string.demo_seed, null) {
+                DemoRow(1, R.string.demo_seed, null) {
                     if (seeded) Text(stringResource(R.string.demo_seed_done), Type.body, palette.accent)
                     else ActionButton(stringResource(R.string.start), { Drive.seedHistory(); seeded = true })
                 }
@@ -257,5 +227,3 @@ private fun DemoRow(index: Int, title: Int, detail: Int?, trailing: @Composable 
         trailing()
     }
 }
-
-private const val DEMO_SCALE = 30

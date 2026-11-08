@@ -30,8 +30,6 @@ object Store {
 
     val trips = mutableStateListOf<Trip>()
     val ledger = mutableStateListOf<Tx>()
-    var conditions by mutableStateOf(Conditions())
-        private set
     var settings by mutableStateOf(Settings())
         private set
     var openTrip: Trip? = null
@@ -40,12 +38,6 @@ object Store {
     fun load(context: Context) {
         prefs = context.getSharedPreferences(NAME, Context.MODE_PRIVATE)
         file = AtomicFile(File(context.filesDir, "$NAME.json"))
-        conditions = Conditions(
-            prefs.getBoolean(NO_NIGHT, true),
-            prefs.getBoolean(AVOID_HIGHWAY, true),
-            prefs.getBoolean(REST, true),
-            prefs.getInt(REST_MINUTES, 60),
-        )
         settings = Settings(
             prefs.getBoolean(CONSENTED, false),
             prefs.getBoolean(SOUND, true),
@@ -57,7 +49,7 @@ object Store {
         try {
             val root = JSONObject(String(file.readFully()))
             trips += root.getJSONArray(TRIPS).objects().map(::trip)
-            ledger += root.getJSONArray(LEDGER).objects().map(::tx)
+            ledger += root.getJSONArray(LEDGER).objects().mapNotNull(::tx)
             openTrip = root.optJSONObject(OPEN)?.let(::trip)
         } catch (e: Exception) {
             Log.e(NAME, "ledger unreadable, starting empty", e)
@@ -65,16 +57,6 @@ object Store {
             trips.clear()
             ledger.clear()
         }
-    }
-
-    fun update(next: Conditions) {
-        conditions = next
-        prefs.edit()
-            .putBoolean(NO_NIGHT, next.noNight)
-            .putBoolean(AVOID_HIGHWAY, next.avoidHighway)
-            .putBoolean(REST, next.rest)
-            .putInt(REST_MINUTES, next.restMinutes)
-            .apply()
     }
 
     fun update(next: Settings) {
@@ -134,10 +116,6 @@ object Store {
         .put("startedAt", trip.startedAt.toString())
         .put("endedAt", trip.endedAt.toString())
         .put("distanceM", trip.distanceM)
-        .put("nightM", trip.nightM)
-        .put("highwayM", trip.highwayM)
-        .put("overLimit", trip.overLimit)
-        .put("rests", trip.rests)
         .put("speeding", trip.speeding)
         .put("hardBrakes", trip.hardBrakes)
         .put("beltOff", trip.beltOff)
@@ -149,10 +127,6 @@ object Store {
         LocalDateTime.parse(o.getString("startedAt")),
         LocalDateTime.parse(o.getString("endedAt")),
         o.getDouble("distanceM"),
-        o.getDouble("nightM"),
-        o.getDouble("highwayM"),
-        o.getBoolean("overLimit"),
-        o.getInt("rests"),
         o.getJSONArray("turns").objects().map { TurnRecord(LocalTime.parse(it.getString("time")), Turn.valueOf(it.getString("turn")), it.getBoolean("onTime"), it.getBoolean("guided")) },
         o.optInt("speeding"),
         o.optInt("hardBrakes"),
@@ -167,16 +141,15 @@ object Store {
         .put("miles", tx.miles)
         .put("count", tx.count)
 
-    private fun tx(o: JSONObject) = Tx(o.getString("id"), LocalDateTime.parse(o.getString("at")), Code.valueOf(o.getString("code")), o.getInt("miles"), o.getInt("count"))
+    // 없어진 적립 종류로 저장된 줄은 건너뜁니다
+    private fun tx(o: JSONObject) = Code.entries.firstOrNull { it.name == o.getString("code") }?.let {
+        Tx(o.getString("id"), LocalDateTime.parse(o.getString("at")), it, o.getInt("miles"), o.getInt("count"))
+    }
 
     private const val NAME = "blue_family"
     private const val TRIPS = "trips"
     private const val LEDGER = "ledger"
     private const val OPEN = "open"
-    private const val NO_NIGHT = "noNight"
-    private const val AVOID_HIGHWAY = "avoidHighway"
-    private const val REST = "rest"
-    private const val REST_MINUTES = "restMinutes"
     private const val CONSENTED = "consented"
     private const val SOUND = "sound"
     private const val VOICE = "voice"

@@ -2,7 +2,7 @@
     <string name="app_name">블루 패밀리</string>
     <string name="product_name">블루 패밀리</string>
 
-    <string name="tab_before">출발 전</string>
+    <string name="tab_drive">이번 운전</string>
     <string name="tab_mileage">마일리지</string>
     <string name="tab_family">가족</string>
     <string name="tab_settings">설정</string>
@@ -16,31 +16,8 @@
     <string name="turn_right">우회전</string>
     <string name="turn_late">%1$s 늦게 켬</string>
 
-    <string name="condition_night">야간 운전 안 함</string>
-    <string name="condition_highway">고속도로 피함</string>
-    <string name="condition_kept">지킴</string>
-    <string name="condition_broken">지키지 못함</string>
 
-    <string name="conditions_title">스스로 정하는 운전 조건</string>
-    <string name="conditions_rest_title">쉬어 가기</string>
-    <string name="conditions_rest_limit">연속 운전 시간</string>
-    <string name="unit_minute">분</string>
-    <string name="decrease">줄이기</string>
-    <string name="increase">늘리기</string>
 
-    <string name="route_title">오늘 경로</string>
-    <string name="route_destination">목적지</string>
-    <string name="route_none">정하지 않음</string>
-    <string name="route_option">경로 옵션</string>
-    <string name="route_free">무료도로 우선</string>
-    <string name="route_free_requested">무료도로 우선으로 요청했습니다</string>
-    <string name="route_free_failed">바꾸지 못했습니다</string>
-    <string name="route_arrival">도착 예정</string>
-    <string name="route_sunset">오늘 일몰</string>
-    <string name="route_continuous">연속 운전</string>
-    <string name="route_continuous_value">%1$d분 / %2$d분</string>
-    <string name="route_after_sunset">도착 예정이 해 진 뒤입니다. 출발을 막지는 않습니다.</string>
-    <string name="dash">-</string>
 
     <string name="balance_label">쓸 수 있는 마일리지</string>
     <string name="tier_green">그린 등급</string>
@@ -55,21 +32,9 @@
     <string name="ledger_turns_unguided">내비 없는 회전 깜빡이 %1$d번</string>
     <string name="ledger_distance">주행 거리 %1$dkm</string>
     <string name="ledger_distance_double">주행 거리 %1$dkm, 안전 배수 2배</string>
-    <string name="ledger_rest">쉬어 가기</string>
-    <string name="ledger_kept_day">조건 지킨 날</string>
-    <string name="ledger_streak">7일 연속 조건 지킴</string>
-    <string name="ledger_partner">제휴처 방문</string>
     <string name="ledger_family">가족 결합 추가 적립</string>
     <string name="ledger_belt">전 좌석 안전벨트 %1$d석</string>
 
-    <string name="rest_places_title">쉬어 갈 곳</string>
-    <string name="rest_places_note">들르면 30마일을 드립니다</string>
-    <string name="km">%1$skm</string>
-    <string name="add_waypoint">경유지로 넣기</string>
-    <string name="waypoint_added">넣었습니다</string>
-    <string name="place_mangyang">서울만남의광장휴게소</string>
-    <string name="place_jukjeon">죽전휴게소</string>
-    <string name="place_giheung">기흥휴게소</string>
 
     <string name="family_code_title">가족 초대 코드</string>
     <string name="family_share">가족과 공유</string>
@@ -102,8 +67,6 @@
     <string name="demo_title">시연</string>
     <string name="demo_replay">회전 안내 재생</string>
     <string name="demo_replay_detail">우회전, 좌회전, 우회전 순서로 안내 거리를 흘립니다</string>
-    <string name="demo_fast">연속 운전 시간 30배</string>
-    <string name="demo_fast_detail">쉬어 가기 안내를 빨리 보여 줍니다</string>
     <string name="demo_seed">지난 6일 기록 채우기</string>
     <string name="demo_seed_done">채웠습니다</string>
     <string name="start">시작</string>
@@ -113,9 +76,7 @@
     <string name="consent_vehicle">차량 정보</string>
     <string name="consent_vehicle_detail">깜빡이, 속도, 브레이크, 안전벨트, 문, 주행 거리</string>
     <string name="consent_location">위치</string>
-    <string name="consent_location_detail">야간 판정과 휴게소 거리에 사용</string>
-    <string name="consent_mic">마이크</string>
-    <string name="consent_mic_detail">쉬어 가기 질문에 답할 때 사용</string>
+    <string name="consent_location_detail">내비 없이 회전할 때 방향 판정에 사용</string>
     <string name="consent_agree">동의하고 시작</string>
     <string name="consent_later">나중에</string>
 
@@ -124,14 +85,23 @@
     <string name="say_summary">회전 %1$d번 중 %2$d번 깜빡이를 제때 켰습니다. %3$d마일이 쌓였습니다.</string>
     <string name="say_summary_no_turns">운전을 마쳤습니다. %1$d마일이 쌓였습니다.</string>
     <string name="say_missed_tip">%1$s은 30미터 전에 켜면 됩니다.</string>
-    <string name="say_rest_question">곧 쉬어 갈 시간입니다. %1$s에 들를까요?</string>
-    <string name="say_waypoints_full">경유지가 가득 찼습니다.</string>
-    <string name="say_free_road">무료도로 우선으로 안내합니다.</string>
-    <string name="say_after_sunset">도착 예정이 해 진 뒤입니다.</string>
-    <string name="yes_stop_by">들러</string>
-    <string name="yes_ok">좋아</string>
-    <string name="yes_yes">응</string>
-    <string name="no_not">안 들</string>
-    <string name="no_dislike">싫어</string>
-    <string name="no_no">아니</string>
+    <string name="seats_title">좌석과 안전벨트</string>
+    <string name="seat_driver">운전석</string>
+    <string name="seat_passenger">조수석</string>
+    <string name="seat_rear_left">뒷좌석 왼쪽</string>
+    <string name="seat_rear_center">뒷좌석 가운데</string>
+    <string name="seat_rear_right">뒷좌석 오른쪽</string>
+    <string name="seat_buckled">맴</string>
+    <string name="seat_unbuckled">안 맴</string>
+    <string name="earn_title">이번 운전에서 받을 수 있는 마일리지</string>
+    <string name="earn_belt">탄 사람 모두 안전벨트</string>
+    <string name="earn_turn">회전 깜빡이 제때</string>
+    <string name="earn_turn_value">회전마다 +%1$d</string>
+    <string name="earn_distance">주행 거리</string>
+    <string name="earn_distance_value">1km마다 +%1$d</string>
+    <string name="earn_safe_day">감점 없이 마치기</string>
+    <string name="earn_family">가족 결합</string>
+    <string name="earn_family_value">+%1$d%%</string>
+    <string name="ledger_safe_day">감점 없는 날</string>
+    <string name="ledger_streak">7일 연속 감점 없음</string>
 </resources>

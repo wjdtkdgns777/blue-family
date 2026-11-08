@@ -61,7 +61,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -254,18 +253,6 @@ fun Toggle(checked: Boolean, modifier: Modifier = Modifier) {
                 .shadow(4.dp, CircleShape)
                 .background(palette.onAccent, CircleShape),
         )
-    }
-}
-
-@Composable
-fun StepButton(glyph: String, description: String, enabled: Boolean, onClick: () -> Unit) {
-    val palette = LocalPalette.current
-    Pressable(
-        onClick = { if (enabled) onClick() },
-        modifier = Modifier.size(Space.touch).glass(palette, CircleShape).semantics { contentDescription = description },
-        shape = CircleShape,
-    ) {
-        Text(glyph, Type.title, if (enabled) palette.text else palette.line)
     }
 }
 
