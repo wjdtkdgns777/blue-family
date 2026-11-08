@@ -24,5 +24,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AnsimMileage"
+rootProject.name = "BlueFamily"
 include(":app")

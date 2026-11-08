@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.ansimmileage"
+    namespace = "com.example.bluefamily"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.example.ansimmileage"
+        applicationId = "com.example.bluefamily"
         minSdk = 28
         targetSdk = 37
         versionCode = 1

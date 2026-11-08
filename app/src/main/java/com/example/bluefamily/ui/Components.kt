@@ -1,4 +1,4 @@
-package com.example.ansimmileage.ui
+package com.example.bluefamily.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.EnterTransition

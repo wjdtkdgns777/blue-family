@@ -1,4 +1,4 @@
-package com.example.ansimmileage
+package com.example.bluefamily
 
 import ai.pleos.playground.stt.SpeechToText
 import ai.pleos.playground.stt.listener.ResultListener
@@ -132,7 +132,7 @@ class Voice(context: Context) {
     }
 
     private companion object {
-        const val TAG = "AnsimMileage"
+        const val TAG = "BlueFamily"
         const val LISTEN_MS = 8_000L
         const val TONE_VOLUME = 60
         const val TONE_MS = 160

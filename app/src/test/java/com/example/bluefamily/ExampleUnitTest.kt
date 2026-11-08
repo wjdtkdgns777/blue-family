@@ -1,4 +1,4 @@
-package com.example.ansimmileage
+package com.example.bluefamily
 
 import org.junit.Test
 
