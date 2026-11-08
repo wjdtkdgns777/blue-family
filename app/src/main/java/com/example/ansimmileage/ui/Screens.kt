@@ -141,7 +141,7 @@ private fun DrivingScreen() {
 private fun ParkedScreen() {
     val palette = LocalPalette.current
     var tab by rememberSaveable { mutableIntStateOf(0) }
-    val tabs = listOf(R.string.tab_today, R.string.tab_before, R.string.tab_mileage, R.string.tab_uses, R.string.tab_family, R.string.tab_settings)
+    val tabs = listOf(R.string.tab_today, R.string.tab_before, R.string.tab_mileage, R.string.tab_family, R.string.tab_settings)
     Column(Modifier.fillMaxSize().padding(horizontal = Space.xxl, vertical = Space.xl)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.product_name), Type.title, palette.text, Modifier.weight(1f))
@@ -160,8 +160,7 @@ private fun ParkedScreen() {
                 0 -> TodayPage()
                 1 -> BeforePage()
                 2 -> MileagePage()
-                3 -> UsesPage()
-                4 -> FamilyPage()
+                3 -> FamilyPage()
                 else -> SettingsPage()
             }
         }
@@ -291,7 +290,11 @@ internal fun SectionHeader(title: String, trailing: String?) {
 private fun BeforePage() {
     TwoColumns(
         left = { ConditionsEditor(Store.conditions, Store::update) },
-        right = { RouteStatus() },
+        right = {
+            RouteStatus()
+            Spacer(Modifier.height(Space.xl))
+            RestPlaces()
+        },
     )
 }
 

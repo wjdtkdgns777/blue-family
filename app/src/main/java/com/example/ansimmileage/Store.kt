@@ -143,6 +143,8 @@ object Store {
         .put("rests", trip.rests)
         .put("speeding", trip.speeding)
         .put("hardBrakes", trip.hardBrakes)
+        .put("beltOff", trip.beltOff)
+        .put("beltedSeats", trip.beltedSeats)
         .put("turns", JSONArray(trip.turns.map { JSONObject().put("time", it.time.toString()).put("turn", it.turn.name).put("onTime", it.onTime).put("guided", it.guided) }))
 
     private fun trip(o: JSONObject) = Trip(
@@ -157,6 +159,8 @@ object Store {
         o.getJSONArray("turns").objects().map { TurnRecord(LocalTime.parse(it.getString("time")), Turn.valueOf(it.getString("turn")), it.getBoolean("onTime"), it.getBoolean("guided")) },
         o.optInt("speeding"),
         o.optInt("hardBrakes"),
+        o.optInt("beltOff"),
+        o.optInt("beltedSeats"),
     )
 
     private fun json(tx: Tx) = JSONObject()

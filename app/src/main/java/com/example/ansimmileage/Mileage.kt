@@ -10,7 +10,7 @@ enum class Turn { LEFT, RIGHT }
 
 data class TurnRecord(val time: LocalTime, val turn: Turn, val onTime: Boolean, val guided: Boolean = true)
 
-enum class Code { DISTANCE, TURN, TURN_UNGUIDED, KEPT_DAY, STREAK, REST, PARTNER, FAMILY }
+enum class Code { DISTANCE, TURN, TURN_UNGUIDED, KEPT_DAY, STREAK, REST, PARTNER, FAMILY, BELT }
 
 data class Tx(val id: String, val at: LocalDateTime, val code: Code, val miles: Int, val count: Int)
 
@@ -26,21 +26,23 @@ data class Trip(
     val turns: List<TurnRecord>,
     val speeding: Int = 0,
     val hardBrakes: Int = 0,
+    val beltOff: Int = 0,
+    val beltedSeats: Int = 0,
 )
 
 data class Conditions(val noNight: Boolean = true, val avoidHighway: Boolean = true, val rest: Boolean = true, val restMinutes: Int = 60)
 
 enum class Tier { GREEN, SILVER, GOLD }
 
-data class Member(@StringRes val name: Int, @StringRes val car: Int, val speeding: Int, val hardBrakes: Int, val missedSignals: Int) {
-    val score get() = Mileage.score(speeding, hardBrakes, missedSignals)
+data class Member(@StringRes val name: Int, @StringRes val car: Int, val speeding: Int, val hardBrakes: Int, val missedSignals: Int, val beltOff: Int) {
+    val score get() = Mileage.score(speeding, hardBrakes, missedSignals, beltOff)
 }
 
 object Family {
     val others = listOf(
-        Member(R.string.member_mother, R.string.car_grandeur, 0, 1, 1),
-        Member(R.string.member_daughter, R.string.car_casper, 2, 1, 3),
-        Member(R.string.member_son, R.string.car_ev3, 1, 0, 0),
+        Member(R.string.member_mother, R.string.car_grandeur, 0, 1, 1, 0),
+        Member(R.string.member_daughter, R.string.car_casper, 2, 1, 3, 1),
+        Member(R.string.member_son, R.string.car_ev3, 1, 0, 0, 0),
     )
     val cars get() = others.size + 1
 }
@@ -65,6 +67,9 @@ object MileageRule {
     const val SPEEDING_PENALTY = 5
     const val HARD_BRAKE_PENALTY = 3
     const val MISSED_SIGNAL_PENALTY = 3
+    const val BELT_OFF_PENALTY = 5
+    const val BELT_TRIP = 10
+    const val BELT_PASSENGER = 5
     const val FAMILY_RATE_PER_CAR = 0.1
     const val FAMILY_RATE_MAX = 0.3
 }
@@ -79,12 +84,12 @@ object Mileage {
         return if (turns.isEmpty()) null else turns.count { it.onTime }.toDouble() / turns.size
     }
 
-    fun score(speeding: Int, hardBrakes: Int, missedSignals: Int) =
-        (100 - speeding * MileageRule.SPEEDING_PENALTY - hardBrakes * MileageRule.HARD_BRAKE_PENALTY - missedSignals * MileageRule.MISSED_SIGNAL_PENALTY).coerceIn(0, 100)
+    fun score(speeding: Int, hardBrakes: Int, missedSignals: Int, beltOff: Int) =
+        (100 - speeding * MileageRule.SPEEDING_PENALTY - hardBrakes * MileageRule.HARD_BRAKE_PENALTY - missedSignals * MileageRule.MISSED_SIGNAL_PENALTY - beltOff * MileageRule.BELT_OFF_PENALTY).coerceIn(0, 100)
 
     fun weekMember(trips: List<Trip>, today: LocalDate, @StringRes name: Int, @StringRes car: Int): Member {
         val week = trips.filter { !it.startedAt.toLocalDate().isBefore(today.minusDays(6)) }
-        return Member(name, car, week.sumOf { it.speeding }, week.sumOf { it.hardBrakes }, week.sumOf { trip -> trip.turns.count { !it.onTime } })
+        return Member(name, car, week.sumOf { it.speeding }, week.sumOf { it.hardBrakes }, week.sumOf { trip -> trip.turns.count { !it.onTime } }, week.sumOf { it.beltOff })
     }
 
     fun familyRate(cars: Int) = ((cars - 1) * MileageRule.FAMILY_RATE_PER_CAR).coerceIn(0.0, MileageRule.FAMILY_RATE_MAX)
@@ -114,6 +119,7 @@ object Mileage {
                 if (streak && !streakGiven) add(tx(Code.STREAK, MileageRule.STREAK, 1))
             }
             if (trip.rests > 0) add(tx(Code.REST, trip.rests * MileageRule.REST, trip.rests))
+            if (trip.beltOff == 0 && trip.beltedSeats > 0) add(tx(Code.BELT, MileageRule.BELT_TRIP + (trip.beltedSeats - 1) * MileageRule.BELT_PASSENGER, trip.beltedSeats))
         }
 
         var room = MileageRule.DAILY_CAP - ledger.filter { it.at.toLocalDate() == day && it.code != Code.PARTNER }.sumOf { it.miles }
