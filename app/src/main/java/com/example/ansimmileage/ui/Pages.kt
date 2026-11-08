@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.ansimmileage.Code
 import com.example.ansimmileage.Drive
+import com.example.ansimmileage.Family
 import com.example.ansimmileage.Mileage
 import com.example.ansimmileage.MileageRule
 import com.example.ansimmileage.R
@@ -37,6 +38,7 @@ import com.example.ansimmileage.Store
 import com.example.ansimmileage.Tier
 import com.example.ansimmileage.Tx
 import java.time.LocalDate
+import kotlin.math.roundToInt
 
 @Composable
 internal fun MileagePage() {
@@ -107,6 +109,7 @@ private fun Tx.title() = when (code) {
     Code.KEPT_DAY -> stringResource(R.string.ledger_kept_day)
     Code.STREAK -> stringResource(R.string.ledger_streak)
     Code.PARTNER -> stringResource(R.string.ledger_partner)
+    Code.FAMILY -> stringResource(R.string.ledger_family)
 }
 
 @Composable
@@ -116,9 +119,11 @@ internal fun UsesPage() {
         left = {
             SectionHeader(stringResource(R.string.uses_title), null)
             listOf(
-                R.string.use_bluehands to R.string.use_bluehands_detail,
                 R.string.use_next_car to R.string.use_next_car_detail,
+                R.string.use_mpoint to R.string.use_mpoint_detail,
                 R.string.use_bluemembers to R.string.use_bluemembers_detail,
+                R.string.use_bluehands to R.string.use_bluehands_detail,
+                R.string.use_epit to R.string.use_epit_detail,
                 R.string.use_insurance to R.string.use_insurance_detail,
             ).forEachIndexed { index, (title, detail) ->
                 Row(Modifier.fillMaxWidth().heightIn(min = 112.dp).enter(index), verticalAlignment = Alignment.CenterVertically) {
@@ -160,21 +165,41 @@ internal fun FamilyPage() {
     val today = LocalDate.now()
     val weekKept = (0L..6L).all { back -> Store.ledger.any { it.code == Code.KEPT_DAY && it.at.toLocalDate() == today.minusDays(back) } }
     val signalGood = (Mileage.signalRate(Store.trips, today.minusDays(6)) ?: 0.0) >= MileageRule.SAFE_RATE
+    val me = Mileage.weekMember(Store.trips, today, R.string.member_me, R.string.car_this)
     TwoColumns(
         left = {
-            Text(stringResource(R.string.family_code_title), Type.body, palette.textSub)
-            Text(settings.inviteCode.chunked(3).joinToString(" "), Type.hero, palette.text, Modifier.enter(0))
-            Text(stringResource(R.string.family_code_note), Type.body, palette.textSub, Modifier.enter(1))
+            Text(stringResource(R.string.family_bundle_title), Type.body, palette.textSub)
+            Text(stringResource(R.string.family_bundle_value, Family.cars), Type.title, palette.text, Modifier.enter(0))
+            Text(stringResource(R.string.family_bundle_bonus, (Mileage.familyRate(Family.cars) * 100).roundToInt()), Type.bodyStrong, palette.accent, Modifier.enter(1))
+            Text(stringResource(R.string.family_bundle_rule), Type.label, palette.textSub, Modifier.enter(2))
             Spacer(Modifier.height(Space.xl))
-            SwitchRow(2, stringResource(R.string.family_share), stringResource(R.string.family_share_detail), settings.familyShare) {
+            SectionHeader(stringResource(R.string.family_scores_title), null)
+            (listOf(me) + Family.others).forEachIndexed { index, member ->
+                Row(Modifier.fillMaxWidth().heightIn(min = Space.touch).enter(index + 3), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("${stringResource(member.name)}  ${stringResource(member.car)}", Type.bodyStrong, palette.text)
+                        Text(stringResource(R.string.family_penalties, member.speeding, member.hardBrakes, member.missedSignals), Type.label, palette.textSub)
+                    }
+                    Text(stringResource(R.string.family_score, member.score), Type.bodyStrong, palette.text)
+                }
+                Hairline()
+            }
+            Text(stringResource(R.string.family_demo_note), Type.label, palette.textSub, Modifier.padding(top = Space.m))
+        },
+        right = {
+            Text(stringResource(R.string.family_code_title), Type.body, palette.textSub)
+            Text(settings.inviteCode.chunked(3).joinToString(" "), Type.title, palette.text)
+            Text(stringResource(R.string.family_code_note), Type.label, palette.textSub)
+            Spacer(Modifier.height(Space.m))
+            SwitchRow(0, stringResource(R.string.family_share), stringResource(R.string.family_share_detail), settings.familyShare) {
                 Store.update(settings.copy(familyShare = it))
             }
             Hairline()
-            SwitchRow(3, stringResource(R.string.family_share_conditions), stringResource(R.string.family_share_conditions_detail), settings.shareConditions) {
+            SwitchRow(1, stringResource(R.string.family_share_conditions), stringResource(R.string.family_share_conditions_detail), settings.shareConditions) {
                 Store.update(settings.copy(shareConditions = it))
             }
-        },
-        right = {
+            Hairline()
+            Spacer(Modifier.height(Space.xl))
             SectionHeader(stringResource(R.string.family_visible_title), null)
             val tier = when (Mileage.tier(Store.ledger, Store.trips, today)) {
                 Tier.GREEN -> R.string.tier_green
@@ -184,6 +209,7 @@ internal fun FamilyPage() {
             val rows = buildList {
                 add(stringResource(R.string.balance_label) to stringResource(R.string.miles_value, Store.balance.grouped()))
                 if (settings.familyShare) {
+                    add(stringResource(R.string.family_my_score) to stringResource(R.string.family_score, me.score))
                     add(stringResource(R.string.family_tier) to stringResource(tier))
                     add(stringResource(R.string.badge_week) to stringResource(if (weekKept) R.string.badge_earned else R.string.badge_not_yet))
                     add(stringResource(R.string.badge_signal) to stringResource(if (signalGood) R.string.badge_earned else R.string.badge_not_yet))

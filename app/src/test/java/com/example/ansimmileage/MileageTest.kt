@@ -50,6 +50,25 @@ class MileageTest {
     }
 
     @Test
+    fun familyBundleAddsBonusOnTopOfEarned() {
+        val txs = Mileage.forTrip(trip(onTime = 5, late = 1), Conditions(), emptyList(), emptyList(), Mileage.familyRate(4))
+        assertEquals(20, miles(txs, Code.FAMILY))
+    }
+
+    @Test
+    fun familyRateGrowsPerCarUpToThirtyPercent() {
+        assertEquals(0.0, Mileage.familyRate(1), 1e-9)
+        assertEquals(0.1, Mileage.familyRate(2), 1e-9)
+        assertEquals(0.3, Mileage.familyRate(6), 1e-9)
+    }
+
+    @Test
+    fun scoreDeductsPenaltiesAndStopsAtZero() {
+        assertEquals(84, Mileage.score(speeding = 2, hardBrakes = 1, missedSignals = 1))
+        assertEquals(0, Mileage.score(speeding = 30, hardBrakes = 0, missedSignals = 0))
+    }
+
+    @Test
     fun dailyCapStopsAtThreeHundred() {
         val ledger = listOf(Tx("old", noon.minusHours(1), Code.DISTANCE, 290, 290))
         val txs = Mileage.forTrip(trip(onTime = 4), Conditions(), emptyList(), ledger)

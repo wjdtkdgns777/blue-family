@@ -141,6 +141,8 @@ object Store {
         .put("highwayM", trip.highwayM)
         .put("overLimit", trip.overLimit)
         .put("rests", trip.rests)
+        .put("speeding", trip.speeding)
+        .put("hardBrakes", trip.hardBrakes)
         .put("turns", JSONArray(trip.turns.map { JSONObject().put("time", it.time.toString()).put("turn", it.turn.name).put("onTime", it.onTime).put("guided", it.guided) }))
 
     private fun trip(o: JSONObject) = Trip(
@@ -153,6 +155,8 @@ object Store {
         o.getBoolean("overLimit"),
         o.getInt("rests"),
         o.getJSONArray("turns").objects().map { TurnRecord(LocalTime.parse(it.getString("time")), Turn.valueOf(it.getString("turn")), it.getBoolean("onTime"), it.getBoolean("guided")) },
+        o.optInt("speeding"),
+        o.optInt("hardBrakes"),
     )
 
     private fun json(tx: Tx) = JSONObject()
