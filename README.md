@@ -2,7 +2,9 @@
 
 # 안심 마일리지
 
-**안전하게 운전한 만큼 마일리지가 쌓입니다. 부모님이 쌓으면 가족이 함께 씁니다.**
+**조건부 면허 시대의 안전운전 마일리지**
+
+안전하게 운전한 만큼 마일리지가 쌓입니다. 부모님이 쌓으면 가족이 함께 씁니다.
 
 현대차와 기아의 Pleos Connect 차량용 앱 | 현대차그룹 차량용 앱 개발 공모전 출품작
 
@@ -177,7 +179,7 @@ Pleos 디자인 가이드의 값을 그대로 토큰으로 옮겼습니다(`ui/T
 | 항목 | 값 |
 |---|---|
 | 에뮬레이터 | Pleos Connect v2.1.0 (Android 14, API 34, 2560×1440) |
-| APK | [`apk/Drivoice_안심마일리지_release.apk`](apk/Drivoice_안심마일리지_release.apk) (release 빌드, 40MB). [Releases](https://github.com/wjdtkdgns777/drivoice-private/releases/latest)에도 같은 파일이 있습니다 |
+| APK | [`apk/Drivoice_안심마일리지_release.apk`](apk/Drivoice_안심마일리지_release.apk) (release 빌드, 40MB). [Releases](https://github.com/wjdtkdgns777/ansim-mileage-private/releases/latest)에도 같은 파일이 있습니다 |
 | 차량 값 조작 | Pleos Connect Virtual Console (`http://127.0.0.1:8088/`) |
 
 ### APK 설치
@@ -190,7 +192,7 @@ adb install -r apk/Drivoice_안심마일리지_release.apk
 adb forward tcp:8088 tcp:8088
 ```
 
-앱 서랍에서 Drivoice를 열고 "동의하고 시작"을 누릅니다. 이어서 뜨는 차속(위치 그룹)과 마이크 권한을 허용합니다. 차량 전용 앱(`android.hardware.type.automotive`)이라 휴대폰 에뮬레이터에는 설치되지 않습니다.
+앱 서랍에서 안심 마일리지를 열고 "동의하고 시작"을 누릅니다. 이어서 뜨는 차속(위치 그룹)과 마이크 권한을 허용합니다. 차량 전용 앱(`android.hardware.type.automotive`)이라 휴대폰 에뮬레이터에는 설치되지 않습니다.
 
 제출한 APK는 release 빌드입니다. 에뮬레이터 내비는 실제로 움직이지 않습니다. 그래서 회전 안내를 재생하는 시연 도구를 release 빌드의 설정 탭에도 넣었습니다. 서명은 Android 기본 디버그 키로 했습니다.
 
