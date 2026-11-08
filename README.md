@@ -14,7 +14,7 @@
 ![Tests](https://img.shields.io/badge/unit_tests-25_passed-2F6BFF?style=flat-square)
 ![Offline](https://img.shields.io/badge/서버-없이_동작-555A62?style=flat-square)
 
-[APK 받기](apk/Drivoice_블루패밀리_release.apk) | [시연 영상](.github/readme/demo.mp4) | [설치와 실행](#설치와-실행) | [시연 순서](#시연-순서)
+[APK 받기](apk/블루패밀리_release.apk) | [시연 영상](.github/readme/demo.mp4) | [설치와 실행](#설치와-실행) | [시연 순서](#시연-순서)
 
 <br>
 
@@ -210,13 +210,13 @@
 | 항목 | 값 |
 |---|---|
 | 에뮬레이터 | Pleos Connect v2.1.0 (Android 14, API 34, 2560×1440) |
-| APK | [`apk/Drivoice_블루패밀리_release.apk`](apk/Drivoice_블루패밀리_release.apk) (release 빌드, 40MB). [Releases](https://github.com/wjdtkdgns777/blue-family-private/releases/latest)에도 같은 파일이 있습니다 |
+| APK | [`apk/블루패밀리_release.apk`](apk/블루패밀리_release.apk) (release 빌드, 40MB). [Releases](https://github.com/wjdtkdgns777/blue-family-private/releases/latest)에도 같은 파일이 있습니다 |
 | 차량 값 조작 | Pleos Connect Virtual Console (`http://127.0.0.1:8088/`) |
 
 ### APK 설치
 
 ```bash
-adb install -r apk/Drivoice_블루패밀리_release.apk
+adb install -r apk/블루패밀리_release.apk
 ```
 
 ```bash
