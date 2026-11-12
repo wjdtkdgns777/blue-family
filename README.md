@@ -12,7 +12,7 @@
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?style=flat-square&logo=kotlin&logoColor=white)
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-BOM_2026.09-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)
 
-[APK 받기](apk/블루패밀리_release.apk) | [시연 영상](.github/readme/demo.mp4) | [설치와 실행](#설치와-실행) | [시연 순서](#시연-순서)
+[APK 받기](apk/KoreaMobilityLabs_블루패밀리_release.apk) | [시연 영상](.github/readme/demo.mp4) | [설치와 실행](#설치와-실행) | [시연 순서](#시연-순서)
 
 <br>
 
@@ -173,11 +173,11 @@ flowchart LR
 | 준비물 | 값 |
 |---|---|
 | 에뮬레이터 | Pleos Connect v2.1.0 (Android 14, API 34, 2560×1440) |
-| APK | [`apk/블루패밀리_release.apk`](apk/블루패밀리_release.apk) |
+| APK | [`apk/KoreaMobilityLabs_블루패밀리_release.apk`](apk/KoreaMobilityLabs_블루패밀리_release.apk) |
 | 차량 값 조작 | Pleos Connect Virtual Console (`http://127.0.0.1:8088/`) |
 
 ```bash
-adb install -r apk/블루패밀리_release.apk
+adb install -r apk/KoreaMobilityLabs_블루패밀리_release.apk
 ```
 
 ```bash
